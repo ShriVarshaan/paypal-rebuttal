@@ -12,6 +12,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@rebuttal/core": "workspace:*"
+    "@anthropic-ai/sdk": "^0.135.0",
+    "@rebuttal/core": "workspace:*",
+    "zod": "^4.6.7",
+    "@rebuttal/decision": "workspace:*"
   }
 }

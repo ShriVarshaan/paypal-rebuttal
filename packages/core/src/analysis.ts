@@ -49,7 +49,8 @@ export type NarrativeClaim = z.infer<typeof NarrativeClaim>;
 
 export const Narrative = z.object({
   headline: z.string().min(1).max(200),
-  claims: z.array(NarrativeClaim).min(1).max(12),
+  /** Empty only for a template built from no evidence. */
+  claims: z.array(NarrativeClaim).max(12),
   /** "claude" or "template". */
   source: z.enum(["claude", "template"]),
   /** Claims the validator removed because a citation was missing or ungrounded. */
