@@ -1,0 +1,22 @@
+{
+  "name": "@rebuttal/testkit",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Test helpers: embedded Postgres with the Rebuttal schema applied.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./global-setup": "./src/global-setup.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "embedded-postgres": "17.5.0-beta.15",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.0"
+  }
+}
