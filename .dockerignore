@@ -1,0 +1,13 @@
+**/node_modules
+**/.turbo
+**/dist
+**/.next
+**/coverage
+.git
+.env
+.env.*
+!.env.example
+.sim
+.pgdata
+fixtures/private
+packages/db/src/generated
