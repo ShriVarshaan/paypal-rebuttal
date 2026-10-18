@@ -9,9 +9,20 @@
   },
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "eval": "tsx --env-file-if-exists=../../.env src/cli.ts run",
+    "eval:generate": "tsx src/cli.ts generate",
+    "eval:calibrate": "tsx src/cli.ts calibrate",
+    "eval:agreement": "tsx src/cli.ts agreement",
+    "eval:label-sheet": "tsx src/cli.ts label-sheet"
   },
   "dependencies": {
-    "@rebuttal/core": "workspace:*"
+    "@rebuttal/core": "workspace:*",
+    "@rebuttal/agent": "workspace:*",
+    "@rebuttal/decision": "workspace:*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
   }
 }

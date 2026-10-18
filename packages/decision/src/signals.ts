@@ -27,6 +27,10 @@ export interface Signals {
   priorOrders: number;
   priorDisputes: number;
   refundIssued: boolean;
+  /** Explicit fraud signs: AVS mismatch, IP and device both unknown to the buyer, delivery to another postal code. 0–3. */
+  fraudSignals: number;
+  /** Tracking shows delivery to a postal code other than the shipping address. */
+  deliveredElsewhere: boolean;
   /** Days between the payment and the dispute being opened, when known. */
   daysToDispute: number | null;
 }
@@ -83,6 +87,21 @@ export function extractSignals(c: DecisionCase, evidence: readonly EvidenceLike[
 
   const risk = ofKind(evidence, "checkout_risk");
   const history = ofKind(evidence, "buyer_history");
+  const deliveredElsewhere = trackers.some((t) => {
+    const to = t.data["deliveredTo"] as Record<string, unknown> | null | undefined;
+    const zip = typeof to?.["zip"] === "string" ? to["zip"] : null;
+    const onFile = dataString(t, "shippingPostalCode");
+    return (
+      dataString(t, "status") === "delivered" &&
+      !!zip &&
+      !!onFile &&
+      !anyMet("delivered_to_address", "MERCHANDISE_OR_SERVICE_NOT_RECEIVED")
+    );
+  });
+  const avsMismatch = risk.some((r) => dataBool(r, "avsMatch") === false);
+  const unknownDevice = risk.some(
+    (r) => dataBool(r, "ipMatch") === false && dataBool(r, "deviceMatch") !== true,
+  );
   const sumOf = (items: EvidenceLike[], key: string) =>
     items.reduce((s, e) => Math.max(s, dataNumber(e, key) ?? 0), 0);
 
@@ -101,6 +120,8 @@ export function extractSignals(c: DecisionCase, evidence: readonly EvidenceLike[
     priorOrders: sumOf(history, "priorOrders"),
     priorDisputes: sumOf(history, "priorDisputes"),
     refundIssued: evidence.some((e) => evidenceKind(e) === "refund"),
+    fraudSignals: Number(avsMismatch) + Number(unknownDevice) + Number(deliveredElsewhere),
+    deliveredElsewhere,
     daysToDispute: days(c.disputedTransactions?.[0]?.createdAt, c.paypalCreatedAt),
   };
 }

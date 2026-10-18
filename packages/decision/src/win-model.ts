@@ -22,6 +22,7 @@ export const FEATURES = [
   "checkout_verified",
   "device_ip_match",
   "repeat_customer",
+  "fraud_signals",
   "buyer_dispute_history",
   "refund_proof",
   "late_dispute",
@@ -42,7 +43,7 @@ const logit = (p: number) => Math.log(p / (1 - p));
 export const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 
 export const HAND_WEIGHTS: WinWeights = {
-  version: "hand-v1",
+  version: "hand-v2",
   // Base win rates with no evidence at all. Assumptions agreed for the decision design; see
   // docs/decision-engine.md. Not-as-described is hardest to win, not-received easiest.
   base: {
@@ -71,6 +72,7 @@ export const HAND_WEIGHTS: WinWeights = {
     checkout_verified: 0.9,
     device_ip_match: 0.6,
     repeat_customer: 0.5,
+    fraud_signals: -1.8,
     buyer_dispute_history: -0.8,
     refund_proof: 1.8,
     late_dispute: 0.2,
@@ -78,7 +80,12 @@ export const HAND_WEIGHTS: WinWeights = {
   },
 };
 
-export const CALIBRATED_WEIGHTS: WinWeights = calibrated as WinWeights;
+/** Tuned weights from `pnpm eval:calibrate`; any feature missing from the file keeps its hand-set weight. */
+export const CALIBRATED_WEIGHTS: WinWeights = {
+  ...HAND_WEIGHTS,
+  ...(calibrated as unknown as Partial<WinWeights>),
+  features: { ...HAND_WEIGHTS.features, ...(calibrated as unknown as Partial<WinWeights>).features },
+};
 
 const NR = "MERCHANDISE_OR_SERVICE_NOT_RECEIVED";
 const NAD = "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED";
@@ -92,7 +99,9 @@ export function features(c: DecisionCase, s: Signals): FeatureVector {
   return {
     completeness: s.completeness.score - 0.5,
     required_met: s.completeness.requiredMet ? 1 : 0,
-    delivery_proof: shipping && s.tracking === "delivered" ? (s.deliveredToAddress ? 1 : 0.4) : 0,
+    // Delivery to another address is weak proof for not-received, and a fraud sign for unauthorised.
+    delivery_proof:
+      shipping && s.tracking === "delivered" ? (s.deliveredToAddress ? 1 : c.reason === NR ? 0.4 : 0) : 0,
     signature: c.reason === NR && physical && s.signature ? 1 : 0,
     shipment_problem:
       c.reason === NR && physical ? (s.tracking === "failed" ? 1 : s.tracking === "in_transit" ? 0.5 : 0) : 0,
@@ -105,6 +114,7 @@ export function features(c: DecisionCase, s: Signals): FeatureVector {
     checkout_verified: c.reason === UNAUTH && s.checkoutVerified ? 1 : 0,
     device_ip_match: c.reason === UNAUTH && s.deviceOrIpMatch ? 1 : 0,
     repeat_customer: c.reason === UNAUTH ? Math.min(1, Math.log2(1 + s.priorOrders) / 2) : 0,
+    fraud_signals: c.reason === UNAUTH ? s.fraudSignals / 3 : 0,
     buyer_dispute_history: Math.min(3, s.priorDisputes) / 3,
     refund_proof: REFUND_REASONS.has(c.reason) && s.refundIssued ? 1 : 0,
     late_dispute: s.daysToDispute === null ? 0 : Math.min(1, s.daysToDispute / 180),

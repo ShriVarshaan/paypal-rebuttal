@@ -25,6 +25,11 @@
     "sandbox:add-tracking": "tsx --env-file-if-exists=.env scripts/sandbox/add-tracking.ts",
     "db:embedded": "tsx scripts/embedded-db.ts",
     "e2e:sim": "pnpm --filter @rebuttal/api test:e2e",
+    "eval": "pnpm --filter @rebuttal/eval eval",
+    "eval:generate": "pnpm --filter @rebuttal/eval eval:generate",
+    "eval:calibrate": "pnpm --filter @rebuttal/eval eval:calibrate",
+    "eval:agreement": "pnpm --filter @rebuttal/eval eval:agreement",
+    "eval:label-sheet": "pnpm --filter @rebuttal/eval eval:label-sheet",
     "record:fixture": "tsx --env-file-if-exists=.env scripts/record-fixture.ts"
   },
   "devDependencies": {
