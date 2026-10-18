@@ -1,0 +1,75 @@
+{
+  "id": "5O190127TN364715T",
+  "status": "COMPLETED",
+  "intent": "CAPTURE",
+  "create_time": "2026-10-02T14:21:07Z",
+  "update_time": "2026-10-02T14:21:07Z",
+  "payer": {
+    "email_address": "buyer@example.com",
+    "payer_id": "TESTPAYER01"
+  },
+  "purchase_units": [
+    {
+      "reference_id": "default",
+      "amount": {
+        "currency_code": "USD",
+        "value": "89.00",
+        "breakdown": {
+          "item_total": {
+            "currency_code": "USD",
+            "value": "89.00"
+          }
+        }
+      },
+      "items": [
+        {
+          "name": "Wireless headphones",
+          "sku": "SKU-HEADPHONES-01",
+          "quantity": "1",
+          "unit_amount": {
+            "currency_code": "USD",
+            "value": "89.00"
+          }
+        }
+      ],
+      "payments": {
+        "captures": [
+          {
+            "id": "3VK13355SM0012345",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "89.00"
+            }
+          }
+        ]
+      },
+      "shipping": {
+        "name": {
+          "full_name": "Test Buyer 1"
+        },
+        "address": {
+          "address_line_1": "1 Test Street",
+          "admin_area_2": "San Jose",
+          "admin_area_1": "CA",
+          "postal_code": "95131",
+          "country_code": "US"
+        },
+        "trackers": [
+          {
+            "id": "3VK13355SM0012345-EZ4000000004",
+            "status": "SHIPPED",
+            "create_time": "2026-10-02T14:21:07Z"
+          }
+        ]
+      }
+    }
+  ],
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/5O190127TN364715T",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

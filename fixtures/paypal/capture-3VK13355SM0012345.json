@@ -1,0 +1,31 @@
+{
+  "id": "3VK13355SM0012345",
+  "status": "COMPLETED",
+  "amount": {
+    "currency_code": "USD",
+    "value": "89.00"
+  },
+  "final_capture": true,
+  "seller_protection": {
+    "status": "ELIGIBLE"
+  },
+  "create_time": "2026-10-02T14:21:07Z",
+  "update_time": "2026-10-02T14:21:07Z",
+  "supplementary_data": {
+    "related_ids": {
+      "order_id": "5O190127TN364715T"
+    }
+  },
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/payments/captures/3VK13355SM0012345",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/5O190127TN364715T",
+      "rel": "up",
+      "method": "GET"
+    }
+  ]
+}

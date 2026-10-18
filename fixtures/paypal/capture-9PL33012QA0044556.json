@@ -1,0 +1,31 @@
+{
+  "id": "9PL33012QA0044556",
+  "status": "COMPLETED",
+  "amount": {
+    "currency_code": "USD",
+    "value": "8.50"
+  },
+  "final_capture": true,
+  "seller_protection": {
+    "status": "ELIGIBLE"
+  },
+  "create_time": "2026-10-11T22:47:30Z",
+  "update_time": "2026-10-11T22:47:30Z",
+  "supplementary_data": {
+    "related_ids": {
+      "order_id": "2RT77001KK550120M"
+    }
+  },
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/payments/captures/9PL33012QA0044556",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/2RT77001KK550120M",
+      "rel": "up",
+      "method": "GET"
+    }
+  ]
+}

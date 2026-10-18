@@ -1,0 +1,77 @@
+{
+  "items": [
+    {
+      "dispute_id": "PP-D-90001",
+      "create_time": "2026-10-15T09:12:44.000Z",
+      "update_time": "2026-10-15T09:12:44.000Z",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+      "status": "WAITING_FOR_SELLER_RESPONSE",
+      "dispute_state": "REQUIRED_ACTION",
+      "dispute_amount": {
+        "currency_code": "USD",
+        "value": "89.00"
+      },
+      "dispute_life_cycle_stage": "CHARGEBACK",
+      "dispute_channel": "INTERNAL",
+      "seller_response_due_date": "2026-10-29T23:59:59.000Z",
+      "links": [
+        {
+          "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-D-90001",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "dispute_id": "PP-D-90002",
+      "create_time": "2026-10-16T17:40:02.000Z",
+      "update_time": "2026-10-16T17:40:02.000Z",
+      "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+      "status": "WAITING_FOR_SELLER_RESPONSE",
+      "dispute_state": "REQUIRED_ACTION",
+      "dispute_amount": {
+        "currency_code": "USD",
+        "value": "64.50"
+      },
+      "dispute_life_cycle_stage": "INQUIRY",
+      "dispute_channel": "INTERNAL",
+      "seller_response_due_date": "2026-10-26T23:59:59.000Z",
+      "links": [
+        {
+          "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-D-90002",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "dispute_id": "PP-D-90003",
+      "create_time": "2026-10-17T06:05:19.000Z",
+      "update_time": "2026-10-17T06:05:19.000Z",
+      "reason": "UNAUTHORISED",
+      "status": "WAITING_FOR_SELLER_RESPONSE",
+      "dispute_state": "REQUIRED_ACTION",
+      "dispute_amount": {
+        "currency_code": "USD",
+        "value": "8.50"
+      },
+      "dispute_life_cycle_stage": "CHARGEBACK",
+      "dispute_channel": "EXTERNAL",
+      "seller_response_due_date": "2026-10-27T23:59:59.000Z",
+      "links": [
+        {
+          "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-D-90003",
+          "rel": "self",
+          "method": "GET"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes?page_size=10",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

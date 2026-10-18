@@ -1,0 +1,20 @@
+{
+  "name": "@rebuttal/paypal",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed PayPal REST client: OAuth, Disputes, Orders, Payments, webhook verification.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rebuttal/core": "workspace:*",
+    "zod": "^4.1.0",
+    "pino": "^10.0.0",
+    "@paypal/agent-toolkit": "^1.11.0"
+  }
+}

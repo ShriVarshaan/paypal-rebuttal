@@ -1,0 +1,75 @@
+{
+  "id": "8XK40513CD118802B",
+  "status": "COMPLETED",
+  "intent": "CAPTURE",
+  "create_time": "2026-10-05T10:02:51Z",
+  "update_time": "2026-10-05T10:02:51Z",
+  "payer": {
+    "email_address": "buyer@example.com",
+    "payer_id": "TESTPAYER01"
+  },
+  "purchase_units": [
+    {
+      "reference_id": "default",
+      "amount": {
+        "currency_code": "USD",
+        "value": "64.50",
+        "breakdown": {
+          "item_total": {
+            "currency_code": "USD",
+            "value": "64.50"
+          }
+        }
+      },
+      "items": [
+        {
+          "name": "Waxed canvas jacket",
+          "sku": "SKU-JACKET-M",
+          "quantity": "1",
+          "unit_amount": {
+            "currency_code": "USD",
+            "value": "64.50"
+          }
+        }
+      ],
+      "payments": {
+        "captures": [
+          {
+            "id": "7MC82044LD0067890",
+            "status": "COMPLETED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "64.50"
+            }
+          }
+        ]
+      },
+      "shipping": {
+        "name": {
+          "full_name": "Test Buyer 2"
+        },
+        "address": {
+          "address_line_1": "1 Test Street",
+          "admin_area_2": "Austin",
+          "admin_area_1": "TX",
+          "postal_code": "78701",
+          "country_code": "US"
+        },
+        "trackers": [
+          {
+            "id": "7MC82044LD0067890-EZ4000000004",
+            "status": "SHIPPED",
+            "create_time": "2026-10-05T10:02:51Z"
+          }
+        ]
+      }
+    }
+  ],
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v2/checkout/orders/8XK40513CD118802B",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}
