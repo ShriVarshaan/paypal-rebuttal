@@ -1,0 +1,67 @@
+{
+  "orders": [
+    {
+      "id": "ord_1001",
+      "invoiceNumber": "INV-1001",
+      "paypalCaptureId": "3VK13355SM0012345",
+      "paypalOrderId": "5O190127TN364715T",
+      "customerId": "cus_201",
+      "placedAt": "2026-10-02T14:20:31.000Z",
+      "digital": false,
+      "totalCents": 8900,
+      "currency": "USD",
+      "items": [{ "name": "Wireless headphones", "sku": "SKU-HEADPHONES-01", "digital": false }],
+      "checkout": { "ip": "203.0.113.24", "deviceId": "dev_a71", "avs": "Y", "cvv": "M" }
+    },
+    {
+      "id": "ord_1002",
+      "invoiceNumber": "INV-1002",
+      "paypalCaptureId": "7MC82044LD0067890",
+      "paypalOrderId": "8XK40513CD118802B",
+      "customerId": "cus_202",
+      "placedAt": "2026-10-05T10:02:10.000Z",
+      "digital": false,
+      "totalCents": 6450,
+      "currency": "USD",
+      "items": [{ "name": "Waxed canvas jacket, size M", "sku": "SKU-JACKET-M", "digital": false }],
+      "checkout": { "ip": "198.51.100.7", "deviceId": "dev_b02", "avs": "Y", "cvv": "M" }
+    },
+    {
+      "id": "ord_1003",
+      "invoiceNumber": "INV-1003",
+      "paypalCaptureId": "9PL33012QA0044556",
+      "paypalOrderId": "2RT77001KK550120M",
+      "customerId": "cus_203",
+      "placedAt": "2026-10-11T22:47:02.000Z",
+      "digital": true,
+      "totalCents": 850,
+      "currency": "USD",
+      "items": [{ "name": "Digital recipe e-book", "sku": "SKU-EBOOK-07", "digital": true }],
+      "checkout": { "ip": "192.0.2.55", "deviceId": "dev_c19", "avs": "Y", "cvv": "M" }
+    }
+  ],
+  "messages": {
+    "ord_1001": [
+      { "at": "2026-10-09T08:15:00.000Z", "from": "buyer", "channel": "email", "text": "Hi, my headphones haven't shown up. Can you check?" },
+      { "at": "2026-10-09T11:40:00.000Z", "from": "seller", "channel": "email", "text": "Sorry to hear that! USPS tracking EZ4000000004 shows it was delivered on Oct 5 and signed for. Could you check with neighbours or your building's mail room?" }
+    ],
+    "ord_1002": [
+      { "at": "2026-10-14T19:02:00.000Z", "from": "buyer", "channel": "email", "text": "The jacket is a lot darker than the photos and the zip keeps sticking." },
+      { "at": "2026-10-15T09:30:00.000Z", "from": "seller", "channel": "email", "text": "Thanks for letting us know, and sorry about the zip. We can sort this out — would a partial refund or a return work better for you?" }
+    ],
+    "ord_1003": []
+  },
+  "accessLogs": {
+    "ord_1003": [
+      { "at": "2026-10-11T22:49:41.000Z", "ip": "192.0.2.55", "action": "download" },
+      { "at": "2026-10-13T07:12:09.000Z", "ip": "192.0.2.55", "action": "download" }
+    ]
+  },
+  "customers": [
+    { "id": "cus_201", "createdAt": "2025-03-14T00:00:00.000Z", "priorOrders": 3, "priorDisputes": 0, "knownIps": ["203.0.113.24"], "knownDevices": ["dev_a71"] },
+    { "id": "cus_202", "createdAt": "2026-09-30T00:00:00.000Z", "priorOrders": 0, "priorDisputes": 0, "knownIps": [], "knownDevices": [] },
+    { "id": "cus_203", "createdAt": "2024-11-02T00:00:00.000Z", "priorOrders": 2, "priorDisputes": 0, "knownIps": ["192.0.2.55"], "knownDevices": ["dev_c19"] }
+  ],
+  "refunds": {},
+  "subscriptions": {}
+}
