@@ -1,0 +1,259 @@
+// DRAFT schema written by A for the platform tables (WebhookEvent, Action, SyncCursor,
+// SlaJob) and the minimum of Case/Decision/EvidencePack the executor needs.
+// C owns the full schema from Day 2; extend it here rather than forking it.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CaseState {
+  NEW
+  GATHERING
+  TRIAGED
+  AWAITING_APPROVAL
+  FILING
+  FILED
+  WAITING_PAYPAL
+  OFFER_PENDING
+  WON
+  LOST
+  REFUNDED
+  APPEAL_DRAFTED
+}
+
+enum DecisionOption {
+  FIGHT
+  OFFER
+  ACCEPT
+}
+
+enum DecisionStatus {
+  PROPOSED
+  APPROVED
+  AUTO_APPROVED
+  REJECTED
+  EXECUTED
+  FAILED
+}
+
+enum ActionKind {
+  PROVIDE_EVIDENCE
+  MAKE_OFFER
+  ACCEPT_CLAIM
+  SEND_MESSAGE
+  ACKNOWLEDGE_RETURN_ITEM
+  APPEAL
+  PROVIDE_SUPPORTING_INFO
+  REFUND
+}
+
+enum ActionStatus {
+  PENDING
+  IN_FLIGHT
+  SUCCEEDED
+  FAILED
+}
+
+enum PackStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum SlaKind {
+  REMIND_72H
+  REMIND_24H
+  REMIND_6H
+  FORCE_DECISION
+}
+
+enum SlaStatus {
+  SCHEDULED
+  CANCELLED
+  FIRED
+}
+
+model Case {
+  id                     String    @id @default(cuid())
+  paypalDisputeId        String    @unique
+  reason                 String
+  status                 String
+  disputeState           String?
+  stage                  String
+  channel                String?
+  amountCents            Int
+  currency               String
+  sellerResponseDueAt    DateTime? @db.Timestamptz(3)
+  buyerResponseDueAt     DateTime? @db.Timestamptz(3)
+  state                  CaseState @default(NEW)
+  outcomeCode            String?
+  withdrawn              Boolean   @default(false)
+  sellerTransactionId    String?
+  disputedTransactions   Json
+  messages               Json
+  allowedResponseOptions Json?
+  /// Capture + order fetched by case.enrich.
+  transactionContext     Json?
+  raw                    Json
+  paypalCreatedAt        DateTime  @db.Timestamptz(3)
+  paypalUpdatedAt        DateTime  @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime  @updatedAt @db.Timestamptz(3)
+
+  events        CaseEvent[]
+  evidence      EvidenceItem[]
+  decisions     Decision[]
+  actions       Action[]
+  packs         EvidencePack[]
+  notifications Notification[]
+  slaJobs       SlaJob[]
+
+  @@index([state])
+  @@index([sellerResponseDueAt])
+}
+
+model CaseEvent {
+  id        String   @id @default(cuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  type      String
+  payload   Json
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([caseId, createdAt])
+}
+
+model WebhookEvent {
+  id            String    @id @default(cuid())
+  paypalEventId String    @unique
+  eventType     String
+  resourceId    String?
+  verified      Boolean
+  payload       Json
+  receivedAt    DateTime  @default(now()) @db.Timestamptz(3)
+  processedAt   DateTime? @db.Timestamptz(3)
+}
+
+model EvidenceItem {
+  id         String   @id @default(cuid())
+  caseId     String
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  source     String
+  type       String
+  title      String
+  dedupeKey  String
+  data       Json
+  filePath   String?
+  capturedAt DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([caseId, source, dedupeKey])
+}
+
+model EvidencePack {
+  id         String     @id @default(cuid())
+  caseId     String
+  case       Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  decisionId String?
+  decision   Decision?  @relation(fields: [decisionId], references: [id])
+  status     PackStatus @default(PENDING)
+  /// [{ path, name, mimeType, sizeBytes, evidenceType }]
+  files      Json
+  notes      String?
+  createdAt  DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@index([decisionId])
+}
+
+model Decision {
+  id               String         @id @default(cuid())
+  caseId           String
+  case             Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  option           DecisionOption
+  status           DecisionStatus @default(PROPOSED)
+  pWin             Float?
+  evFight          Float?
+  evOffer          Float?
+  evAccept         Float?
+  offerAmountCents Int?
+  offerType        String?
+  note             String
+  rationale        String?
+  /// Why the decision was made outside the normal flow, e.g. DEADLINE.
+  reason           String?
+  modelVersion     String?
+  approvedBy       String?
+  approvedAt       DateTime?      @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+
+  actions Action[]
+  packs   EvidencePack[]
+
+  @@index([caseId])
+}
+
+model Action {
+  id             String       @id @default(cuid())
+  caseId         String
+  case           Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  decisionId     String?
+  decision       Decision?    @relation(fields: [decisionId], references: [id])
+  kind           ActionKind
+  endpoint       String
+  /// Sent as PayPal-Request-Id; every retry of this action reuses it.
+  idempotencyKey String       @unique
+  status         ActionStatus @default(PENDING)
+  attempts       Int          @default(0)
+  request        Json?
+  response       Json?
+  error          Json?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+  completedAt    DateTime?    @db.Timestamptz(3)
+
+  // Plus a partial unique index added in the init migration:
+  // one SUCCEEDED action per (caseId, kind), except SEND_MESSAGE.
+  @@index([caseId, kind])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  caseId    String?
+  case      Case?     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind      String
+  level     String
+  message   String
+  readAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([readAt, createdAt])
+}
+
+model SlaJob {
+  id        String    @id @default(cuid())
+  caseId    String
+  case      Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  kind      SlaKind
+  /// pg-boss job id, used to cancel when the due date moves.
+  jobId     String
+  runAt     DateTime  @db.Timestamptz(3)
+  dueAt     DateTime  @db.Timestamptz(3)
+  status    SlaStatus @default(SCHEDULED)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([caseId, status])
+}
+
+/// Small key/value store for sync state, e.g. the last successful poll time.
+model SyncCursor {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
