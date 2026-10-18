@@ -1,0 +1,16 @@
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+tmp/
+fixtures/private/
