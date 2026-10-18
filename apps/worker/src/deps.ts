@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import type { LlmClient } from "@rebuttal/agent";
 import type { EvidenceSource } from "@rebuttal/connectors";
 import type { Db } from "@rebuttal/db";
 import { safeDefault } from "@rebuttal/decision";
@@ -13,6 +14,8 @@ export interface Deps {
   log: Logger;
   sources: EvidenceSource[];
   safeDefault: typeof safeDefault;
+  /** Claude for the triage/narrative/appeal agents; null = deterministic templates only. */
+  llm: LlmClient | null;
   now: () => Date;
   readFile: (path: string) => Promise<Uint8Array>;
 }
@@ -20,7 +23,7 @@ export interface Deps {
 export function defaultDeps(
   parts: Pick<Deps, "db" | "paypal" | "queue" | "log" | "sources"> & Partial<Deps>,
 ): Deps {
-  return { safeDefault, now: () => new Date(), readFile: (p) => readFile(p), ...parts };
+  return { safeDefault, llm: null, now: () => new Date(), readFile: (p) => readFile(p), ...parts };
 }
 
 /** A job failure that retrying cannot fix. Handlers record it and complete the job. */

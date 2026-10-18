@@ -1,5 +1,5 @@
 // Simulator-mode end to end (`pnpm e2e:sim`): webhook → sync → enrich → gather →
-// (B's triage, stubbed) → approve → provide-evidence → adjudicate → RESOLVED webhook → WON.
+// triage (B) → approve → provide-evidence → adjudicate → RESOLVED webhook → WON.
 // Real pg-boss, real Postgres, the api and worker in one process; PayPal is the simulator.
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -70,12 +70,12 @@ const webhook = (file: string) =>
   });
 
 it(
-  "not-received dispute: webhook → evidence → approve → file → adjudicate → WON",
+  "not-received dispute: webhook → evidence → triage → approve → file → adjudicate → WON",
   { timeout: 60_000 },
   async () => {
     expect((await webhook("dispute-created.json")).statusCode).toBe(200);
 
-    // sync → enrich → gather run in the worker.
+    // sync → enrich → gather → triage run in the worker.
     await expect
       .poll(
         async () =>
@@ -84,21 +84,17 @@ it(
           ),
         { timeout: 20_000, interval: 250 },
       )
-      .toEqual(["CREATED", "ENRICHED", "EVIDENCE_GATHERED"]);
+      .toEqual(["CREATED", "ENRICHED", "EVIDENCE_GATHERED", "TRIAGED", "DECISION_PROPOSED"]);
     const c = await db.case.findUniqueOrThrow({
       where: { paypalDisputeId: "PP-D-90001" },
       include: { evidence: true },
     });
     expect(c.evidence.map((e) => (e.data as { status: string }).status)).toEqual(["delivered"]);
 
-    // B's triage job would propose this, and C's pack job would build the PDF.
-    const decision = await db.decision.create({
-      data: {
-        caseId: c.id,
-        option: "FIGHT",
-        note: "Tracking EZ4000000004 shows delivery to the address on file.",
-      },
-    });
+    // Triage proposed FIGHT (9 is above the auto-file limit); C's pack job would build the PDF.
+    const decision = await db.decision.findFirstOrThrow({ where: { caseId: c.id } });
+    expect(decision).toMatchObject({ option: "FIGHT", status: "PROPOSED" });
+    expect(c.state).toBe("AWAITING_APPROVAL");
     const pdf = join(mkdtempSync(join(tmpdir(), "rebuttal-pack-")), "pack.pdf");
     writeFileSync(pdf, Buffer.concat([Buffer.from("%PDF-1.7\n"), Buffer.alloc(4096)]));
     const pack = await db.evidencePack.create({

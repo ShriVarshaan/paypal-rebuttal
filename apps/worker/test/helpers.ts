@@ -118,6 +118,6 @@ export function setupTestEnv(sources: EvidenceSource[] = [createOfflineEasyPostS
 /** Deletes all rows so each test starts clean (faster than a new database). */
 export async function resetDb(db: Db): Promise<void> {
   await db.$executeRawUnsafe(
-    `TRUNCATE "Action", "Decision", "EvidencePack", "EvidenceItem", "CaseEvent", "Notification", "SlaJob", "Case", "WebhookEvent", "SyncCursor" CASCADE`,
+    `TRUNCATE "Action", "Decision", "EvidencePack", "EvidenceItem", "CaseEvent", "Notification", "SlaJob", "Case", "WebhookEvent", "SyncCursor", "Policy" CASCADE`,
   );
 }

@@ -211,6 +211,8 @@ export function decideCase(input: {
   now: Date;
   exhibits?: readonly Exhibit[];
   triage?: TriageResult | null;
+  /** Injection heuristics on buyer text: blocks autonomy even when no LLM ran. */
+  injectionSuspected?: boolean;
   weights?: WinWeights;
 }): FullDecision {
   const analysis = analyzeCase(input.c, input.evidence, input.policy, input.weights);
@@ -223,7 +225,7 @@ export function decideCase(input: {
     decision,
     policy: input.policy,
     now: input.now,
-    injectionSuspected: input.triage?.injectionSuspected ?? false,
+    injectionSuspected: !!input.injectionSuspected || !!input.triage?.injectionSuspected,
   });
   const option = auto.reason === "DEADLINE" ? safeOption(decision, analysis) : decision.option;
   const offer = option === "OFFER" ? decision.offer : null;

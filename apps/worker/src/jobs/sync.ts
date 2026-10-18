@@ -21,6 +21,27 @@ async function resolvedByUs(deps: Deps, caseId: string): Promise<boolean> {
 }
 
 /**
+ * B's follow-ups: a loss gets an appeal draft; a new buyer message re-gathers (and so
+ * re-triages) an undecided case; a pending offer the buyer escalated gets decided again.
+ */
+async function followUps(
+  deps: Deps,
+  before: CaseRow["state"],
+  after: CaseRow,
+  changes: { type: string }[],
+): Promise<void> {
+  const id = after.id;
+  if (after.state === "LOST" && before !== "LOST")
+    await deps.queue.send(QUEUES.caseAppeal, { caseId: id }, { singletonKey: id });
+  if (after.status === "RESOLVED") return;
+  const regather =
+    (changes.some((c) => c.type === "BUYER_MESSAGE") &&
+      (after.state === "TRIAGED" || after.state === "AWAITING_APPROVAL")) ||
+    (changes.some((c) => c.type === "STAGE_CHANGED") && after.state === "OFFER_PENDING");
+  if (regather) await deps.queue.send(QUEUES.caseGather, { caseId: id }, { singletonKey: id });
+}
+
+/**
  * dispute.sync: show the dispute, upsert the Case by paypal_dispute_id, and emit
  * CaseEvents only for real changes. A no-op sync writes nothing at all.
  */
@@ -112,6 +133,7 @@ export async function syncDispute(deps: Deps, disputeId: string, retried = false
 
   if (changes.length)
     deps.log.info({ caseId: updated.id, disputeId, events: changes.map((c) => c.type) }, "case updated");
+  await followUps(deps, existing.state, updated, changes);
   if (TERMINAL_STATES.has(updated.state) || updated.status === "RESOLVED") await cancelSla(deps, updated.id);
   else if (changes.some((c) => c.type === "DUE_DATE_CHANGED")) await scheduleSla(deps, updated);
   return { caseId: updated.id, created: false, events: changes.map((c) => c.type) };

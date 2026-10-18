@@ -1,3 +1,4 @@
+import { llmFromEnv } from "@rebuttal/agent";
 import { defaultSources } from "@rebuttal/connectors";
 import { createDb } from "@rebuttal/db";
 import { assertSafeForProduction, createPayPalClient } from "@rebuttal/paypal";
@@ -16,18 +17,19 @@ async function main() {
 
   const db = createDb(databaseUrl);
   const paypal = createPayPalClient({ log });
+  const llm = llmFromEnv();
   const boss = new PgBoss({ connectionString: databaseUrl, application_name: "rebuttal-worker" });
   boss.on("error", (err) => log.error({ err: err.message }, "pg-boss error"));
   await boss.start();
 
   await startWorker(
     boss,
-    defaultDeps({ db, paypal, queue: pgBossQueue(boss), log, sources: defaultSources() }),
+    defaultDeps({ db, paypal, queue: pgBossQueue(boss), log, sources: defaultSources(), llm }),
     {
       pollCron: process.env["POLL_DISABLED"] === "1" ? false : "* * * * *",
     },
   );
-  log.info({ mode: paypal.mode }, "worker started");
+  log.info({ mode: paypal.mode, agents: llm ? "claude" : "templates" }, "worker started");
 
   let stopping = false;
   const shutdown = async (signal: string) => {

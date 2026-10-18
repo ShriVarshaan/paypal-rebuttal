@@ -1,12 +1,14 @@
 import type { JobWithMetadata, PgBoss } from "pg-boss";
 import type { z } from "zod";
 import { PermanentJobError, type Deps } from "./deps.js";
+import { appealCase } from "./jobs/appeal.js";
 import { enrichCase } from "./jobs/enrich.js";
 import { executeDecision, onPackReady } from "./jobs/execute.js";
 import { gatherEvidence } from "./jobs/gather.js";
 import { pollDisputes } from "./jobs/poll.js";
 import { fireSla } from "./jobs/sla.js";
 import { syncDispute } from "./jobs/sync.js";
+import { triageCase } from "./jobs/triage.js";
 import { Payloads, QUEUES, ensureQueues, type QueueName } from "./queues.js";
 
 export interface WorkerOptions {
@@ -15,7 +17,7 @@ export interface WorkerOptions {
   pollingIntervalSeconds?: number;
 }
 
-/** Registers every job handler A owns. B and C register case.triage and their pack job. */
+/** Registers every job handler: A's platform jobs and B's triage/appeal. C adds the pack job. */
 export async function startWorker(boss: PgBoss, deps: Deps, opts: WorkerOptions = {}): Promise<void> {
   await ensureQueues(boss);
 
@@ -61,6 +63,8 @@ export async function startWorker(boss: PgBoss, deps: Deps, opts: WorkerOptions 
   await handle(QUEUES.disputePoll, () => pollDisputes(deps));
   await handle(QUEUES.caseEnrich, (d) => enrichCase(deps, d.caseId));
   await handle(QUEUES.caseGather, (d) => gatherEvidence(deps, d.caseId));
+  await handle(QUEUES.caseTriage, (d) => triageCase(deps, d.caseId));
+  await handle(QUEUES.caseAppeal, (d) => appealCase(deps, d.caseId));
   await handle(QUEUES.actionExecute, (d, job) =>
     executeDecision(deps, d.decisionId, { retryCount: job.retryCount, retryLimit: job.retryLimit }),
   );

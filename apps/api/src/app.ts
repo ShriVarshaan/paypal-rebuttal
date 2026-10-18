@@ -1,4 +1,5 @@
 import cors from "@fastify/cors";
+import type { LlmClient } from "@rebuttal/agent";
 import rateLimit from "@fastify/rate-limit";
 import type { Db } from "@rebuttal/db";
 import type { PayPalClient } from "@rebuttal/paypal";
@@ -7,6 +8,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import type { ApiConfig } from "./config.js";
 import { caseRoutes } from "./routes/cases.js";
 import { healthRoutes } from "./routes/health.js";
+import { intelligenceRoutes } from "./routes/intelligence.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 
 export interface AppDeps {
@@ -16,6 +18,8 @@ export interface AppDeps {
   config: ApiConfig;
   /** Health check for the job queue. */
   checkQueue: () => Promise<void>;
+  /** Claude for buyer-message drafts; null/absent = templates. */
+  llm?: LlmClient | null;
 }
 
 export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): Promise<FastifyInstance> {
@@ -36,5 +40,6 @@ export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): 
   await app.register(healthRoutes(deps));
   await app.register(webhookRoutes(deps));
   await app.register(caseRoutes(deps));
+  await app.register(intelligenceRoutes(deps));
   return app;
 }

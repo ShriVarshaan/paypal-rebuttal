@@ -16,3 +16,12 @@ export { enrichCase } from "./jobs/enrich.js";
 export { gatherEvidence } from "./jobs/gather.js";
 export { executeDecision, onPackReady } from "./jobs/execute.js";
 export { scheduleSla, cancelSla, fireSla, SLA_OFFSETS } from "./jobs/sla.js";
+export {
+  triageCase,
+  loadPolicy,
+  agentCase,
+  toEvidenceLike,
+  POLICY_ID,
+  type TriageJobResult,
+} from "./jobs/triage.js";
+export { appealCase } from "./jobs/appeal.js";

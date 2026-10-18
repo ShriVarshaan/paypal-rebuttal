@@ -22,8 +22,12 @@ const LEVEL: Record<SlaKind, string> = {
   FORCE_DECISION: "critical",
 };
 
-/** States in which the case has already been answered, so no forced decision is needed. */
-const RESPONDED = new Set(["FILING", "FILED", "WAITING_PAYPAL", "OFFER_PENDING", "WON", "LOST", "REFUNDED"]);
+/**
+ * States in which the case has already been answered, so no forced decision is needed.
+ * FILING is not one of them: an approved FIGHT can sit in FILING waiting for its PDF pack,
+ * and the forced decision below re-enqueues it so the executor files without the pack.
+ */
+const RESPONDED = new Set(["FILED", "WAITING_PAYPAL", "OFFER_PENDING", "WON", "LOST", "REFUNDED"]);
 
 export async function cancelSla(deps: Deps, caseId: string, keepDueAt?: Date): Promise<void> {
   const scheduled = await deps.db.slaJob.findMany({ where: { caseId, status: "SCHEDULED" } });

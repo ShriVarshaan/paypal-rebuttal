@@ -18,6 +18,7 @@ export const CaseEventType = z.enum([
   "TRIAGED",
   "DECISION_PROPOSED",
   "DECISION_SUPERSEDED",
+  "DECISION_EDITED",
   "APPEAL_DRAFTED",
 ]);
 export type CaseEventType = z.infer<typeof CaseEventType>;

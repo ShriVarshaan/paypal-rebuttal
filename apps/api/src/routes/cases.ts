@@ -4,7 +4,7 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
 
-function tokenMatches(header: string | undefined, token: string): boolean {
+export function tokenMatches(header: string | undefined, token: string): boolean {
   const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
   const want = Buffer.from(token);
   return given.length === want.length && timingSafeEqual(given, want);

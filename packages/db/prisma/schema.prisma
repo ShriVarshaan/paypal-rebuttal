@@ -188,6 +188,10 @@ model Decision {
   /// Why the decision was made outside the normal flow, e.g. DEADLINE.
   reason           String?
   modelVersion     String?
+  /// DecisionAnalysis from @rebuttal/core: p_win, contributions, EV table, LLM nudge, usage.
+  analysis         Json?
+  /// Narrative (cited seller statement) for FIGHT decisions.
+  narrative        Json?
   approvedBy       String?
   approvedAt       DateTime?      @db.Timestamptz(3)
   createdAt        DateTime       @default(now()) @db.Timestamptz(3)
@@ -249,6 +253,14 @@ model SlaJob {
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([caseId, status])
+}
+
+/// Merchant policy (Policy in @rebuttal/core): autonomy rules and EV assumptions. One row, id "default".
+model Policy {
+  id        String   @id @default("default")
+  config    Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 }
 
 /// Small key/value store for sync state, e.g. the last successful poll time.

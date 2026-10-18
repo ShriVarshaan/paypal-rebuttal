@@ -1,3 +1,4 @@
+import { llmFromEnv } from "@rebuttal/agent";
 import { createDb } from "@rebuttal/db";
 import { assertSafeForProduction, createPayPalClient } from "@rebuttal/paypal";
 import { QUEUES, ensureQueues, pgBossQueue } from "@rebuttal/worker";
@@ -28,6 +29,7 @@ async function main() {
     paypal,
     queue: pgBossQueue(boss),
     config,
+    llm: llmFromEnv(),
     checkQueue: async () => {
       if (!(await boss.getQueue(QUEUES.disputeSync))) throw new Error("queues not installed");
     },

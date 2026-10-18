@@ -7,8 +7,10 @@ export const QUEUES = {
   disputePoll: "dispute.poll",
   caseEnrich: "case.enrich",
   caseGather: "case.gather",
-  /** Owned by B: triage → decision. Sent after gathering; B registers the worker. */
+  /** B: triage → Decision (jobs/triage.ts). Sent after gathering. */
   caseTriage: "case.triage",
+  /** B: draft an appeal when a case is LOST (jobs/appeal.ts). */
+  caseAppeal: "case.appeal",
   actionExecute: "action.execute",
   /** Sent by C's pack job when an EvidencePack is READY. */
   packReady: "pack.ready",
@@ -22,6 +24,7 @@ export const Payloads = {
   [QUEUES.caseEnrich]: z.object({ caseId: z.string() }),
   [QUEUES.caseGather]: z.object({ caseId: z.string() }),
   [QUEUES.caseTriage]: z.object({ caseId: z.string() }),
+  [QUEUES.caseAppeal]: z.object({ caseId: z.string() }),
   [QUEUES.actionExecute]: z.object({ decisionId: z.string() }),
   [QUEUES.packReady]: z.object({ packId: z.string() }),
   [QUEUES.slaFire]: z.object({ slaJobId: z.string() }),
@@ -45,6 +48,7 @@ export const QUEUE_CONFIG: Record<QueueName, QueueConfig> = {
   [QUEUES.caseEnrich]: { policy: "stately", retryLimit: 5, retryDelay: 5, retryBackoff: true },
   [QUEUES.caseGather]: { policy: "stately", retryLimit: 3, retryDelay: 10, retryBackoff: true },
   [QUEUES.caseTriage]: { policy: "stately", retryLimit: 3, retryDelay: 10, retryBackoff: true },
+  [QUEUES.caseAppeal]: { policy: "stately", retryLimit: 3, retryDelay: 30, retryBackoff: true },
   [QUEUES.actionExecute]: {
     policy: "stately",
     retryLimit: 6,
