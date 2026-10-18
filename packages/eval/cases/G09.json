@@ -1,0 +1,79 @@
+{
+  "id": "G09",
+  "title": "merchandise or service not received, partial evidence, physical, inquiry",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "INQUIRY",
+    "amountCents": 14547,
+    "currency": "USD",
+    "paidAt": "2026-08-09T08:00:00.000Z",
+    "openedAt": "2026-09-08T08:00:00.000Z",
+    "dueAt": "2026-09-18T08:00:00.000Z",
+    "allowedResponseOptions": {
+      "make_offer": {
+        "offer_types": [
+          "REFUND",
+          "REFUND_WITH_RETURN"
+        ]
+      },
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-08T08:00:00.000Z",
+        "content": "Tracking says delivered but there's nothing here."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "trk-1",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: delivered",
+      "data": {
+        "trackingCode": "EZ1000007919",
+        "carrier": "USPS",
+        "status": "delivered",
+        "deliveredAt": "2026-08-12T08:00:00.000Z",
+        "deliveredTo": {
+          "zip": "10001"
+        },
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "OFFER",
+    "acceptableOptions": [
+      "OFFER"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.60: EV fight $67.05, offer $70.40, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.601,
+    "buyerAcceptRatio": 0.608,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "inquiry"
+    ]
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "id": "H15",
+  "title": "$8.50 e-book, strong account evidence",
+  "dispute": {
+    "reason": "UNAUTHORISED",
+    "stage": "CHARGEBACK",
+    "amountCents": 850,
+    "currency": "USD",
+    "paidAt": "2026-09-16T15:00:00.000Z",
+    "openedAt": "2026-09-28T15:00:00.000Z",
+    "dueAt": "2026-10-08T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [],
+    "items": [
+      "Digital recipe e-book"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-16T15:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-2",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 2 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 2,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-09-16T15:14:24.000Z",
+        "ipMatchesCheckout": true
+      }
+    },
+    {
+      "id": "his-3",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 2,
+        "priorDisputes": 0
+      }
+    },
+    {
+      "id": "rsk-4",
+      "source": "account",
+      "type": "ORDER_DETAILS",
+      "title": "Checkout verification",
+      "data": {
+        "kind": "checkout_risk",
+        "avsMatch": true,
+        "cvvMatch": true,
+        "ipMatch": true,
+        "deviceMatch": true
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "Would likely win, but $8.50 is less than the time it takes to file.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.85,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "medium",
+    "tags": [
+      "digital",
+      "tiny-amount"
+    ]
+  }
+}

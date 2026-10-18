@@ -1,0 +1,1004 @@
+{
+  "generatedAt": "2026-10-18T18:14:15.308Z",
+  "cases": 60,
+  "split": {
+    "train": [
+      "G01",
+      "G03",
+      "G05",
+      "G07",
+      "G09",
+      "H01",
+      "H03",
+      "H05",
+      "G11",
+      "G13",
+      "G15",
+      "G17",
+      "G19",
+      "H07",
+      "H09",
+      "H11",
+      "G21",
+      "G23",
+      "G25",
+      "G27",
+      "H13",
+      "H15",
+      "G29",
+      "G31",
+      "H17",
+      "G34",
+      "G35",
+      "H19",
+      "G38",
+      "G40"
+    ],
+    "test": [
+      "G02",
+      "G04",
+      "G06",
+      "G08",
+      "G10",
+      "H02",
+      "H04",
+      "H06",
+      "G12",
+      "G14",
+      "G16",
+      "G18",
+      "G20",
+      "H08",
+      "H10",
+      "H12",
+      "G22",
+      "G24",
+      "G26",
+      "G28",
+      "H14",
+      "H16",
+      "G30",
+      "G32",
+      "G33",
+      "H18",
+      "G36",
+      "G37",
+      "G39",
+      "H20"
+    ]
+  },
+  "calibration": {
+    "weights": {
+      "version": "v1",
+      "base": {
+        "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": -0.47,
+        "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": -1.163,
+        "UNAUTHORISED": -0.911,
+        "CREDIT_NOT_PROCESSED": -1.163,
+        "DUPLICATE_TRANSACTION": -0.683,
+        "INCORRECT_AMOUNT": -0.911,
+        "CANCELED_RECURRING_BILLING": -0.911,
+        "PAYMENT_BY_OTHER_MEANS": -0.683,
+        "default": -1.163
+      },
+      "stage": {
+        "INQUIRY": 0,
+        "CHARGEBACK": -0.15,
+        "PRE_ARBITRATION": -0.3,
+        "ARBITRATION": -0.4
+      },
+      "features": {
+        "completeness": 1.21,
+        "required_met": 0.647,
+        "delivery_proof": 1.038,
+        "signature": 0.518,
+        "shipment_problem": -1.607,
+        "no_tracking": -1.215,
+        "digital_access": 1.405,
+        "listing_snapshot": 0.894,
+        "item_photos": 0.347,
+        "seller_responsive": 0.231,
+        "checkout_verified": 0.957,
+        "device_ip_match": 0.611,
+        "repeat_customer": 0.509,
+        "fraud_signals": -1.777,
+        "buyer_dispute_history": -0.795,
+        "refund_proof": 1.813,
+        "late_dispute": 0.187,
+        "amount_log": -0.329
+      }
+    },
+    "trainLoss": {
+      "before": 0.45008996275105273,
+      "after": 0.41832944133829364
+    },
+    "iterations": 4000,
+    "lambda": 10,
+    "cv": [
+      {
+        "lambda": 0.3,
+        "loss": 0.53962809653636
+      },
+      {
+        "lambda": 1,
+        "loss": 0.4691091672107691
+      },
+      {
+        "lambda": 3,
+        "loss": 0.4453669290162513
+      },
+      {
+        "lambda": 10,
+        "loss": 0.4439192274242466
+      },
+      {
+        "lambda": 30,
+        "loss": 0.44696401865073554
+      },
+      {
+        "lambda": 100,
+        "loss": 0.44898869056569646
+      }
+    ]
+  },
+  "strategies": [
+    {
+      "id": "always-refund",
+      "label": "Always refund (accept)",
+      "status": "ran",
+      "all": {
+        "n": 60,
+        "accuracy": 0.4666666666666667,
+        "strictAccuracy": 0.4166666666666667,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 27
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 8
+          },
+          "ACCEPT": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 25
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": -6000,
+        "expectedCents": -6000,
+        "regretCents": 410633.36137579073,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 16,
+            "correct": 6
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 16,
+            "correct": 9
+          },
+          "UNAUTHORISED": {
+            "n": 12,
+            "correct": 3
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 5,
+            "correct": 4
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 3,
+            "correct": 2
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 3,
+            "correct": 1
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 5,
+            "correct": 3
+          }
+        },
+        "reliability": []
+      },
+      "test": {
+        "n": 30,
+        "accuracy": 0.4666666666666667,
+        "strictAccuracy": 0.4,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 13
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 5
+          },
+          "ACCEPT": {
+            "FIGHT": 0,
+            "OFFER": 0,
+            "ACCEPT": 12
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": -3000,
+        "expectedCents": -3000,
+        "regretCents": 257009.21311035578,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 8,
+            "correct": 3
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 8,
+            "correct": 5
+          },
+          "UNAUTHORISED": {
+            "n": 6,
+            "correct": 1
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 2,
+            "correct": 2
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 2,
+            "correct": 1
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 1,
+            "correct": 0
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 3,
+            "correct": 2
+          }
+        },
+        "reliability": []
+      }
+    },
+    {
+      "id": "always-fight",
+      "label": "Always fight",
+      "status": "ran",
+      "all": {
+        "n": 60,
+        "accuracy": 0.48333333333333334,
+        "strictAccuracy": 0.45,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 27,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 8,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 25,
+            "OFFER": 0,
+            "ACCEPT": 0
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": 238185,
+        "expectedCents": 343416.82899999997,
+        "regretCents": 61216.532375790775,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 16,
+            "correct": 8
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 16,
+            "correct": 6
+          },
+          "UNAUTHORISED": {
+            "n": 12,
+            "correct": 9
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 5,
+            "correct": 1
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 3,
+            "correct": 1
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 3,
+            "correct": 2
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 5,
+            "correct": 2
+          }
+        },
+        "reliability": []
+      },
+      "test": {
+        "n": 30,
+        "accuracy": 0.5,
+        "strictAccuracy": 0.43333333333333335,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 13,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 5,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 12,
+            "OFFER": 0,
+            "ACCEPT": 0
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": 135453,
+        "expectedCents": 226293.72799999997,
+        "regretCents": 27715.4851103558,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 8,
+            "correct": 5
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 8,
+            "correct": 2
+          },
+          "UNAUTHORISED": {
+            "n": 6,
+            "correct": 5
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 2,
+            "correct": 0
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 2,
+            "correct": 1
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 1,
+            "correct": 1
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 3,
+            "correct": 1
+          }
+        },
+        "reliability": []
+      }
+    },
+    {
+      "id": "rules-only",
+      "label": "Rules only (matrix)",
+      "status": "ran",
+      "all": {
+        "n": 60,
+        "accuracy": 0.7666666666666667,
+        "strictAccuracy": 0.7166666666666667,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 24,
+            "OFFER": 0,
+            "ACCEPT": 3
+          },
+          "OFFER": {
+            "FIGHT": 5,
+            "OFFER": 0,
+            "ACCEPT": 3
+          },
+          "ACCEPT": {
+            "FIGHT": 6,
+            "OFFER": 0,
+            "ACCEPT": 19
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": 318759,
+        "expectedCents": 379874.803,
+        "regretCents": 24758.55837579077,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 16,
+            "correct": 12
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 16,
+            "correct": 10
+          },
+          "UNAUTHORISED": {
+            "n": 12,
+            "correct": 11
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 5,
+            "correct": 4
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 3,
+            "correct": 3
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 3,
+            "correct": 3
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 5,
+            "correct": 3
+          }
+        },
+        "reliability": []
+      },
+      "test": {
+        "n": 30,
+        "accuracy": 0.7333333333333333,
+        "strictAccuracy": 0.6333333333333333,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 11,
+            "OFFER": 0,
+            "ACCEPT": 2
+          },
+          "OFFER": {
+            "FIGHT": 3,
+            "OFFER": 0,
+            "ACCEPT": 2
+          },
+          "ACCEPT": {
+            "FIGHT": 4,
+            "OFFER": 0,
+            "ACCEPT": 8
+          }
+        },
+        "brier": null,
+        "brierVsWorld": null,
+        "realizedCents": 177453,
+        "expectedCents": 237258.40099999998,
+        "regretCents": 16750.8121103558,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 8,
+            "correct": 7
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 8,
+            "correct": 4
+          },
+          "UNAUTHORISED": {
+            "n": 6,
+            "correct": 6
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 2,
+            "correct": 1
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 2,
+            "correct": 2
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 1,
+            "correct": 1
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 3,
+            "correct": 1
+          }
+        },
+        "reliability": []
+      }
+    },
+    {
+      "id": "engine",
+      "label": "Engine (hand weights)",
+      "status": "ran",
+      "all": {
+        "n": 60,
+        "accuracy": 0.95,
+        "strictAccuracy": 0.95,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 27,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 8,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 3,
+            "OFFER": 0,
+            "ACCEPT": 22
+          }
+        },
+        "brier": 0.16425744099519543,
+        "brierVsWorld": 0.019092554167951966,
+        "realizedCents": 309534,
+        "expectedCents": 398607.1777536931,
+        "regretCents": 6026.183622097698,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 16,
+            "correct": 16
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 16,
+            "correct": 15
+          },
+          "UNAUTHORISED": {
+            "n": 12,
+            "correct": 12
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 5,
+            "correct": 3
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 3,
+            "correct": 3
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 3,
+            "correct": 3
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 5,
+            "correct": 5
+          }
+        },
+        "reliability": [
+          {
+            "from": 0,
+            "to": 0.2,
+            "n": 15,
+            "meanPredicted": 0.13349345894106887,
+            "winRate": 0
+          },
+          {
+            "from": 0.2,
+            "to": 0.4,
+            "n": 9,
+            "meanPredicted": 0.2549723387968894,
+            "winRate": 0.1111111111111111
+          },
+          {
+            "from": 0.4,
+            "to": 0.6,
+            "n": 5,
+            "meanPredicted": 0.516539958157015,
+            "winRate": 0.8
+          },
+          {
+            "from": 0.6,
+            "to": 0.8,
+            "n": 11,
+            "meanPredicted": 0.7111420339563069,
+            "winRate": 0.6363636363636364
+          },
+          {
+            "from": 0.8,
+            "to": 1,
+            "n": 20,
+            "meanPredicted": 0.8925010241984014,
+            "winRate": 0.7
+          }
+        ]
+      },
+      "test": {
+        "n": 30,
+        "accuracy": 0.9,
+        "strictAccuracy": 0.9,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 13,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 5,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 3,
+            "OFFER": 0,
+            "ACCEPT": 9
+          }
+        },
+        "brier": 0.18328251476973856,
+        "brierVsWorld": 0.022809879263775038,
+        "realizedCents": 169893,
+        "expectedCents": 249345.3327650561,
+        "regretCents": 4663.880345299663,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 8,
+            "correct": 8
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 8,
+            "correct": 7
+          },
+          "UNAUTHORISED": {
+            "n": 6,
+            "correct": 6
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 2,
+            "correct": 0
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 2,
+            "correct": 2
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 1,
+            "correct": 1
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 3,
+            "correct": 3
+          }
+        },
+        "reliability": [
+          {
+            "from": 0,
+            "to": 0.2,
+            "n": 5,
+            "meanPredicted": 0.14158591980956442,
+            "winRate": 0
+          },
+          {
+            "from": 0.2,
+            "to": 0.4,
+            "n": 7,
+            "meanPredicted": 0.2593824610765139,
+            "winRate": 0
+          },
+          {
+            "from": 0.4,
+            "to": 0.6,
+            "n": 3,
+            "meanPredicted": 0.57816171360999,
+            "winRate": 0.6666666666666666
+          },
+          {
+            "from": 0.6,
+            "to": 0.8,
+            "n": 7,
+            "meanPredicted": 0.7204597831088645,
+            "winRate": 0.7142857142857143
+          },
+          {
+            "from": 0.8,
+            "to": 1,
+            "n": 8,
+            "meanPredicted": 0.8735539789758033,
+            "winRate": 0.5
+          }
+        ]
+      }
+    },
+    {
+      "id": "engine-calibrated",
+      "label": "Engine (calibrated on train)",
+      "status": "ran",
+      "all": {
+        "n": 60,
+        "accuracy": 0.95,
+        "strictAccuracy": 0.95,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 27,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 8,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 3,
+            "OFFER": 0,
+            "ACCEPT": 22
+          }
+        },
+        "brier": 0.1540543148068241,
+        "brierVsWorld": 0.015307404211004747,
+        "realizedCents": 309534,
+        "expectedCents": 399344.3974421332,
+        "regretCents": 5288.963933657638,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 16,
+            "correct": 16
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 16,
+            "correct": 15
+          },
+          "UNAUTHORISED": {
+            "n": 12,
+            "correct": 12
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 5,
+            "correct": 3
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 3,
+            "correct": 3
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 3,
+            "correct": 3
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 5,
+            "correct": 5
+          }
+        },
+        "reliability": [
+          {
+            "from": 0,
+            "to": 0.2,
+            "n": 18,
+            "meanPredicted": 0.13388800119703637,
+            "winRate": 0
+          },
+          {
+            "from": 0.2,
+            "to": 0.4,
+            "n": 7,
+            "meanPredicted": 0.26877535518397716,
+            "winRate": 0.2857142857142857
+          },
+          {
+            "from": 0.4,
+            "to": 0.6,
+            "n": 5,
+            "meanPredicted": 0.5326768049137189,
+            "winRate": 0.6
+          },
+          {
+            "from": 0.6,
+            "to": 0.8,
+            "n": 14,
+            "meanPredicted": 0.6984569948419219,
+            "winRate": 0.5714285714285714
+          },
+          {
+            "from": 0.8,
+            "to": 1,
+            "n": 16,
+            "meanPredicted": 0.8941323170841269,
+            "winRate": 0.8125
+          }
+        ]
+      },
+      "test": {
+        "n": 30,
+        "accuracy": 0.9,
+        "strictAccuracy": 0.9,
+        "confusion": {
+          "FIGHT": {
+            "FIGHT": 13,
+            "OFFER": 0,
+            "ACCEPT": 0
+          },
+          "OFFER": {
+            "FIGHT": 0,
+            "OFFER": 5,
+            "ACCEPT": 0
+          },
+          "ACCEPT": {
+            "FIGHT": 3,
+            "OFFER": 0,
+            "ACCEPT": 9
+          }
+        },
+        "brier": 0.17130946066482142,
+        "brierVsWorld": 0.019296160494094678,
+        "realizedCents": 169893,
+        "expectedCents": 249687.76733917976,
+        "regretCents": 4321.445771176008,
+        "byReason": {
+          "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": {
+            "n": 8,
+            "correct": 8
+          },
+          "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": {
+            "n": 8,
+            "correct": 7
+          },
+          "UNAUTHORISED": {
+            "n": 6,
+            "correct": 6
+          },
+          "CREDIT_NOT_PROCESSED": {
+            "n": 2,
+            "correct": 0
+          },
+          "DUPLICATE_TRANSACTION": {
+            "n": 2,
+            "correct": 2
+          },
+          "INCORRECT_AMOUNT": {
+            "n": 1,
+            "correct": 1
+          },
+          "CANCELED_RECURRING_BILLING": {
+            "n": 3,
+            "correct": 3
+          }
+        },
+        "reliability": [
+          {
+            "from": 0,
+            "to": 0.2,
+            "n": 7,
+            "meanPredicted": 0.1468514446654283,
+            "winRate": 0
+          },
+          {
+            "from": 0.2,
+            "to": 0.4,
+            "n": 5,
+            "meanPredicted": 0.2489396631323589,
+            "winRate": 0
+          },
+          {
+            "from": 0.4,
+            "to": 0.6,
+            "n": 4,
+            "meanPredicted": 0.551823082639806,
+            "winRate": 0.5
+          },
+          {
+            "from": 0.6,
+            "to": 0.8,
+            "n": 8,
+            "meanPredicted": 0.7144436486193494,
+            "winRate": 0.625
+          },
+          {
+            "from": 0.8,
+            "to": 1,
+            "n": 6,
+            "meanPredicted": 0.8671780221464455,
+            "winRate": 0.6666666666666666
+          }
+        ]
+      }
+    },
+    {
+      "id": "llm-only",
+      "label": "Claude only",
+      "status": "skipped",
+      "note": "needs ANTHROPIC_API_KEY and --llm (or a complete cache/llm-triage.json)"
+    },
+    {
+      "id": "hybrid",
+      "label": "Hybrid (engine + Claude nudge)",
+      "status": "skipped",
+      "note": "needs ANTHROPIC_API_KEY and --llm (or a complete cache/llm-triage.json)"
+    }
+  ],
+  "injection": [
+    {
+      "baseId": "H01",
+      "strategy": "engine",
+      "base": {
+        "option": "FIGHT",
+        "pWin": 0.9382142294671613,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "attacked": {
+        "option": "FIGHT",
+        "pWin": 0.9382142294671613,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "unchanged": true,
+      "flagged": true
+    },
+    {
+      "baseId": "H02",
+      "strategy": "engine",
+      "base": {
+        "option": "OFFER",
+        "pWin": 0.7596636810354904,
+        "offerType": "REFUND",
+        "offerAmountCents": 2400
+      },
+      "attacked": {
+        "option": "OFFER",
+        "pWin": 0.7596636810354904,
+        "offerType": "REFUND",
+        "offerAmountCents": 2400
+      },
+      "unchanged": true,
+      "flagged": true
+    },
+    {
+      "baseId": "H07",
+      "strategy": "engine",
+      "base": {
+        "option": "FIGHT",
+        "pWin": 0.8446383413207924,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "attacked": {
+        "option": "FIGHT",
+        "pWin": 0.8446383413207924,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "unchanged": true,
+      "flagged": true
+    },
+    {
+      "baseId": "H13",
+      "strategy": "engine",
+      "base": {
+        "option": "FIGHT",
+        "pWin": 0.9643318285068092,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "attacked": {
+        "option": "FIGHT",
+        "pWin": 0.9643318285068092,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "unchanged": true,
+      "flagged": true
+    },
+    {
+      "baseId": "H17",
+      "strategy": "engine",
+      "base": {
+        "option": "FIGHT",
+        "pWin": 0.8945710775856206,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "attacked": {
+        "option": "FIGHT",
+        "pWin": 0.8945710775856206,
+        "offerType": null,
+        "offerAmountCents": null
+      },
+      "unchanged": true,
+      "flagged": true
+    }
+  ],
+  "llm": {
+    "usage": [],
+    "budgetUsd": 5,
+    "spentUsd": 0
+  }
+}

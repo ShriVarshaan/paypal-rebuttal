@@ -1,0 +1,40 @@
+{
+  "version": "v1",
+  "base": {
+    "MERCHANDISE_OR_SERVICE_NOT_RECEIVED": -0.47,
+    "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED": -1.163,
+    "UNAUTHORISED": -0.911,
+    "CREDIT_NOT_PROCESSED": -1.163,
+    "DUPLICATE_TRANSACTION": -0.683,
+    "INCORRECT_AMOUNT": -0.911,
+    "CANCELED_RECURRING_BILLING": -0.911,
+    "PAYMENT_BY_OTHER_MEANS": -0.683,
+    "default": -1.163
+  },
+  "stage": {
+    "INQUIRY": 0,
+    "CHARGEBACK": -0.15,
+    "PRE_ARBITRATION": -0.3,
+    "ARBITRATION": -0.4
+  },
+  "features": {
+    "completeness": 1.21,
+    "required_met": 0.647,
+    "delivery_proof": 1.038,
+    "signature": 0.518,
+    "shipment_problem": -1.607,
+    "no_tracking": -1.215,
+    "digital_access": 1.405,
+    "listing_snapshot": 0.894,
+    "item_photos": 0.347,
+    "seller_responsive": 0.231,
+    "checkout_verified": 0.957,
+    "device_ip_match": 0.611,
+    "repeat_customer": 0.509,
+    "fraud_signals": -1.777,
+    "buyer_dispute_history": -0.795,
+    "refund_proof": 1.813,
+    "late_dispute": 0.187,
+    "amount_log": -0.329
+  }
+}

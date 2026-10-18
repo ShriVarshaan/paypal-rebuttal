@@ -1,0 +1,100 @@
+{
+  "id": "G36",
+  "title": "incorrect amount, strong evidence, physical, chargeback",
+  "dispute": {
+    "reason": "INCORRECT_AMOUNT",
+    "stage": "CHARGEBACK",
+    "amountCents": 14877,
+    "currency": "USD",
+    "paidAt": "2026-09-11T09:00:00.000Z",
+    "openedAt": "2026-09-22T09:00:00.000Z",
+    "dueAt": "2026-10-02T09:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-22T09:00:00.000Z",
+        "content": "I was charged more than the price shown."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-11T09:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "agreedAmountCents": 14877
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-17T09:00:00.000Z",
+            "channel": "email",
+            "text": "I was charged more than the price shown."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-17T16:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.52: EV fight $54.53, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.518,
+    "buyerAcceptRatio": 0.498,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "easy",
+    "tags": [
+      "strong",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

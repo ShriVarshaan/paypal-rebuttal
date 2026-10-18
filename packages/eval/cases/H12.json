@@ -1,0 +1,81 @@
+{
+  "id": "H12",
+  "title": "Low-value item, nothing on file",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "INQUIRY",
+    "amountCents": 1400,
+    "currency": "USD",
+    "paidAt": "2026-09-13T15:00:00.000Z",
+    "openedAt": "2026-09-25T15:00:00.000Z",
+    "dueAt": "2026-10-05T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "make_offer": {
+        "offer_types": [
+          "REFUND",
+          "REFUND_WITH_RETURN"
+        ]
+      },
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-25T15:00:00.000Z",
+        "content": "The mug arrived chipped."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "msg-1",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (1)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-19T15:00:00.000Z",
+            "channel": "email",
+            "text": "The mug arrived chipped."
+          }
+        ],
+        "sellerReplied": false,
+        "firstSellerReplyHours": null,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT",
+      "OFFER"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "$14 with no listing evidence: refund and move on.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.2,
+    "buyerAcceptRatio": 0.6,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "easy",
+    "tags": [
+      "low-value"
+    ]
+  }
+}

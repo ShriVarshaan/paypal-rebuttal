@@ -1,4 +1,4 @@
-import { runTriage, type LlmClient } from "@rebuttal/agent";
+import { runTriage, type Budget, type LlmClient } from "@rebuttal/agent";
 import {
   assignExhibits,
   DEFAULT_POLICY,
@@ -84,8 +84,16 @@ export interface TriageCache {
   set(id: string, v: { triage: TriageResult; usage: AgentUsage[] }): void;
 }
 
-/** One Claude triage per case, cached, shared by the LLM-only and hybrid strategies. */
-export function triageRunner(llm: LlmClient | null, cache: TriageCache, policy: Policy = DEFAULT_POLICY) {
+/**
+ * One Claude triage per case, cached, shared by the LLM-only and hybrid strategies. Every
+ * call is charged to `budget`; once it's spent, uncached cases fail and the run reports it.
+ */
+export function triageRunner(
+  llm: LlmClient | null,
+  cache: TriageCache,
+  policy: Policy = DEFAULT_POLICY,
+  budget?: Budget,
+) {
   return async (c: EvalCase) => {
     const hit = cache.get(c.id);
     if (hit) return hit;
@@ -97,6 +105,7 @@ export function triageRunner(llm: LlmClient | null, cache: TriageCache, policy: 
       evidence: { exhibits, items: c.evidence },
       analysis: analyzeCase(dc, c.evidence, policy),
       policy,
+      ...(budget ? { budget } : {}),
     });
     const v = { triage: out.result, usage: out.usage };
     cache.set(c.id, v);

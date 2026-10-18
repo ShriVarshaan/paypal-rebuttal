@@ -1,0 +1,102 @@
+{
+  "id": "H17",
+  "title": "Credit not processed, refund already issued",
+  "dispute": {
+    "reason": "CREDIT_NOT_PROCESSED",
+    "stage": "CHARGEBACK",
+    "amountCents": 7500,
+    "currency": "USD",
+    "paidAt": "2026-09-18T15:00:00.000Z",
+    "openedAt": "2026-09-30T15:00:00.000Z",
+    "dueAt": "2026-10-10T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-30T15:00:00.000Z",
+        "content": "I returned it and never got my money back."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ref-1",
+      "source": "account",
+      "type": "PROOF_OF_REFUND",
+      "title": "Refund record",
+      "data": {
+        "kind": "refund",
+        "refundId": "R-1",
+        "amountCents": 7500,
+        "refundedAt": "2026-09-23T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "pol-2",
+      "source": "storefront",
+      "type": "RETURN_POLICY",
+      "title": "Return policy",
+      "data": {
+        "kind": "return_policy",
+        "returnWindowDays": 30
+      }
+    },
+    {
+      "id": "msg-3",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-24T15:00:00.000Z",
+            "channel": "email",
+            "text": "Where is my order?"
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-24T22:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "The refund record settles it.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.9,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "easy",
+    "tags": [
+      "refund-proof"
+    ]
+  }
+}

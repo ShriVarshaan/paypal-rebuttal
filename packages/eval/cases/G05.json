@@ -1,0 +1,112 @@
+{
+  "id": "G05",
+  "title": "merchandise or service not received, strong evidence, digital, chargeback",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "CHARGEBACK",
+    "amountCents": 871,
+    "currency": "USD",
+    "paidAt": "2026-07-08T09:00:00.000Z",
+    "openedAt": "2026-08-22T09:00:00.000Z",
+    "dueAt": "2026-09-01T09:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-08-22T09:00:00.000Z",
+        "content": "I never received my order."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-07-08T09:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-2",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 3 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 3,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-07-08T09:14:24.000Z",
+        "ipMatchesCheckout": true
+      }
+    },
+    {
+      "id": "msg-3",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-07-14T09:00:00.000Z",
+            "channel": "email",
+            "text": "Still waiting after three weeks."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-07-14T16:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "World p_win 0.87: EV fight $-5.80, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.87,
+    "buyerAcceptRatio": 0.597,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "easy",
+    "tags": [
+      "strong",
+      "digital",
+      "chargeback"
+    ]
+  }
+}

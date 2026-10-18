@@ -9,7 +9,7 @@ import {
   type DecisionCase,
 } from "@rebuttal/decision";
 import { allowedResponses } from "@rebuttal/core";
-import type { EvalCase } from "./schema.js";
+import { wins, type EvalCase } from "./schema.js";
 
 /** Eval case → the DecisionCase the engine reads (the production code path). */
 export function toDecisionCase(c: EvalCase): DecisionCase {
@@ -39,7 +39,7 @@ export interface Choice {
 export function realizedValue(c: EvalCase, choice: Choice, policy: Policy = DEFAULT_POLICY): number {
   const e = policy.economics;
   const A = c.dispute.amountCents;
-  const fight = c.truth.wins
+  const fight = wins(c)
     ? A - labor(e, e.fightMinutes)
     : -(e.lossFeeCents + riskPenalty(e)) - labor(e, e.fightMinutes);
   switch (choice.option) {
@@ -50,7 +50,7 @@ export function realizedValue(c: EvalCase, choice: Choice, policy: Policy = DEFA
     case "OFFER": {
       const type = choice.offerType ?? "REFUND";
       const refund = choice.offerAmountCents ?? 0;
-      const accepted = type === "REFUND" ? refund / A >= c.truth.buyerAcceptRatio : c.truth.acceptsReturn;
+      const accepted = type === "REFUND" ? refund / A >= c.world.buyerAcceptRatio : c.world.acceptsReturn;
       return accepted ? offerValue(A, refund, type, e) - labor(e, e.offerMinutes) : fight;
     }
   }
@@ -75,7 +75,7 @@ export function trueValues(c: EvalCase, policy: Policy = DEFAULT_POLICY) {
   const offer = optimizeOffer({
     amountCents: c.dispute.amountCents,
     currency: c.dispute.currency,
-    pWin: c.truth.pWin,
+    pWin: c.world.pWin,
     allowedTypes: allowed.offerTypes,
     digital,
     economics: e,
@@ -85,7 +85,7 @@ export function trueValues(c: EvalCase, policy: Policy = DEFAULT_POLICY) {
   const values: { option: DecisionOption; ev: number }[] = [];
   if (allowed.accept) values.push({ option: "ACCEPT", ev: evAccept(e) });
   if (offer) values.push({ option: "OFFER", ev: offer.evCents });
-  values.push({ option: "FIGHT", ev: evFight(c.dispute.amountCents, c.truth.pWin, e) });
+  values.push({ option: "FIGHT", ev: evFight(c.dispute.amountCents, c.world.pWin, e) });
   const best = [...values].sort((a, b) => b.ev - a.ev)[0]!;
   return { values, best, offer };
 }

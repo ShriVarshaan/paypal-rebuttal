@@ -76,7 +76,7 @@ describe("case.triage on the three fixture disputes", () => {
     expect(r).toMatchObject({ status: "decided", option: "FIGHT", autoApproved: false });
 
     const d = await decisionOf(caseId);
-    expect(d).toMatchObject({ status: "PROPOSED", option: "FIGHT", modelVersion: "engine-v1/hand-v2" });
+    expect(d).toMatchObject({ status: "PROPOSED", option: "FIGHT", modelVersion: "engine-v1/v0" });
     expect(d.pWin).toBeGreaterThan(0.85);
     expect(d.note).toMatch(/Tracking EZ4000000004.*\(EX-1\)/);
     expect(d.rationale).toMatch(/^p_win 0\.\d\d \(model/);
@@ -207,7 +207,7 @@ describe("case.triage policy and safety", () => {
     const a = d.analysis as unknown as DecisionAnalysis;
     expect(a.llm).toMatchObject({ applied: true, delta: -0.04, exhibits: ["EX-2"] });
     expect(d.pWin).toBeCloseTo(a.pWinModel - 0.04);
-    expect(d.modelVersion).toBe("engine-v1/hand-v2+claude-opus-5-5");
+    expect(d.modelVersion).toBe("engine-v1/v0+claude-opus-5-5");
     expect(a.usage.map((u) => u.agent)).toEqual(["triage", "narrative"]);
     const runs = await t.db.agentRun.findMany({ where: { caseId }, orderBy: { createdAt: "asc" } });
     expect(runs.map((r) => [r.agent, r.decisionId])).toEqual([

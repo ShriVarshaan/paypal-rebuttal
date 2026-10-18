@@ -1,12 +1,13 @@
 import type { DecisionCase } from "./types.js";
 import type { Signals } from "./signals.js";
-import calibrated from "./weights.calibrated.json" with { type: "json" };
+import v0 from "./weights.v0.json" with { type: "json" };
+import calibrated from "./weights.v1.json" with { type: "json" };
 
 /**
  * p_win = logistic(base(reason) + stage + Σ wᵢ·xᵢ)  (plan §3).
  * Features are reason-aware: a feature that doesn't bear on this reason is 0, so one weight
- * vector serves every reason. Weights are hand-set; `pnpm eval:calibrate` tunes them on the
- * train half of the eval set and writes weights.calibrated.json.
+ * vector serves every reason. Weights are hand-set (weights.v0.json); `pnpm eval:calibrate`
+ * tunes them on the train half of the eval set and writes weights.v1.json.
  */
 export const FEATURES = [
   "completeness",
@@ -42,45 +43,15 @@ export interface WinWeights {
 const logit = (p: number) => Math.log(p / (1 - p));
 export const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 
+/** Hand-set weights (weights.v0.json, with a note on every weight). */
 export const HAND_WEIGHTS: WinWeights = {
-  version: "hand-v2",
-  // Base win rates with no evidence at all. Assumptions agreed for the decision design; see
-  // docs/decision-engine.md. Not-as-described is hardest to win, not-received easiest.
-  base: {
-    MERCHANDISE_OR_SERVICE_NOT_RECEIVED: logit(0.4),
-    MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: logit(0.25),
-    UNAUTHORISED: logit(0.3),
-    CREDIT_NOT_PROCESSED: logit(0.25),
-    DUPLICATE_TRANSACTION: logit(0.35),
-    INCORRECT_AMOUNT: logit(0.3),
-    CANCELED_RECURRING_BILLING: logit(0.3),
-    PAYMENT_BY_OTHER_MEANS: logit(0.35),
-    default: logit(0.25),
-  },
-  stage: { INQUIRY: 0, CHARGEBACK: -0.15, PRE_ARBITRATION: -0.3, ARBITRATION: -0.4 },
-  features: {
-    completeness: 1.2,
-    required_met: 0.7,
-    delivery_proof: 1.1,
-    signature: 0.6,
-    shipment_problem: -1.6,
-    no_tracking: -1.2,
-    digital_access: 1.3,
-    listing_snapshot: 1.0,
-    item_photos: 0.4,
-    seller_responsive: 0.3,
-    checkout_verified: 0.9,
-    device_ip_match: 0.6,
-    repeat_customer: 0.5,
-    fraud_signals: -1.8,
-    buyer_dispute_history: -0.8,
-    refund_proof: 1.8,
-    late_dispute: 0.2,
-    amount_log: -0.15,
-  },
+  version: v0.version,
+  base: Object.fromEntries(Object.entries(v0.baseRates).map(([reason, p]) => [reason, logit(p)])),
+  stage: v0.stage,
+  features: v0.features,
 };
 
-/** Tuned weights from `pnpm eval:calibrate`; any feature missing from the file keeps its hand-set weight. */
+/** Tuned weights (weights.v1.json, from `pnpm eval:calibrate`); missing features keep their v0 weight. */
 export const CALIBRATED_WEIGHTS: WinWeights = {
   ...HAND_WEIGHTS,
   ...(calibrated as unknown as Partial<WinWeights>),

@@ -1,0 +1,91 @@
+{
+  "id": "H14",
+  "title": "New buyer, address mismatch, unknown device",
+  "dispute": {
+    "reason": "UNAUTHORISED",
+    "stage": "CHARGEBACK",
+    "amountCents": 26000,
+    "currency": "USD",
+    "paidAt": "2026-09-15T15:00:00.000Z",
+    "openedAt": "2026-09-27T15:00:00.000Z",
+    "dueAt": "2026-10-07T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "trk-1",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: delivered",
+      "data": {
+        "trackingCode": "EZ1000007919",
+        "carrier": "USPS",
+        "status": "delivered",
+        "deliveredAt": "2026-09-18T15:00:00.000Z",
+        "deliveredTo": {
+          "zip": "60601"
+        },
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    },
+    {
+      "id": "rsk-2",
+      "source": "account",
+      "type": "ORDER_DETAILS",
+      "title": "Checkout verification",
+      "data": {
+        "kind": "checkout_risk",
+        "avsMatch": false,
+        "cvvMatch": true,
+        "ipMatch": false,
+        "deviceMatch": false
+      }
+    },
+    {
+      "id": "his-3",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 0,
+        "priorDisputes": 0
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "Every fraud signal points to real unauthorised use; a fight would lose and add a fee.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.1,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "medium",
+    "tags": [
+      "new-buyer",
+      "address-mismatch",
+      "fraud"
+    ]
+  }
+}

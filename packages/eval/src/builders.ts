@@ -73,7 +73,7 @@ export class EvidenceBuilder {
       },
     };
   }
-  listing(capturedDaysBeforeOrder: number): EvalEvidence {
+  listing(capturedDaysBeforeOrder: number, description = "As pictured. See size chart."): EvalEvidence {
     return {
       id: this.id("lst"),
       source: "storefront",
@@ -82,6 +82,7 @@ export class EvidenceBuilder {
       data: {
         kind: "listing_snapshot",
         title: "Listing",
+        description,
         capturedAt: this.at(-capturedDaysBeforeOrder),
         orderedAt: this.paidAt,
       },

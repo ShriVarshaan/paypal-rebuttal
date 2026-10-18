@@ -1,0 +1,85 @@
+{
+  "id": "H05",
+  "title": "Digital course downloaded three times",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "CHARGEBACK",
+    "amountCents": 2900,
+    "currency": "USD",
+    "paidAt": "2026-09-06T15:00:00.000Z",
+    "openedAt": "2026-09-18T15:00:00.000Z",
+    "dueAt": "2026-09-28T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-18T15:00:00.000Z",
+        "content": "I never got access to the course."
+      }
+    ],
+    "items": [
+      "Online course"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-06T15:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-2",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 3 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 3,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-09-06T15:14:24.000Z",
+        "ipMatchesCheckout": true
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "Download logs from the checkout IP prove delivery, and $29 still clears the cost of fighting.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.8,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "easy",
+    "tags": [
+      "digital",
+      "download-log"
+    ]
+  }
+}

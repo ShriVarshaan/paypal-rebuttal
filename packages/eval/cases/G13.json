@@ -1,0 +1,87 @@
+{
+  "id": "G13",
+  "title": "merchandise or service not as described, weak evidence, physical, chargeback",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "CHARGEBACK",
+    "amountCents": 35737,
+    "currency": "USD",
+    "paidAt": "2026-08-26T16:00:00.000Z",
+    "openedAt": "2026-09-01T16:00:00.000Z",
+    "dueAt": "2026-09-11T16:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-01T16:00:00.000Z",
+        "content": "This is not what the listing showed."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "msg-1",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (1)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-01T16:00:00.000Z",
+            "channel": "email",
+            "text": "The material feels cheap and the size is wrong."
+          }
+        ],
+        "sellerReplied": false,
+        "firstSellerReplyHours": null,
+        "buyerMessageCount": 1
+      }
+    },
+    {
+      "id": "his-2",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 2,
+        "priorDisputes": 2
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.06: EV fight $-12.61, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.061,
+    "buyerAcceptRatio": 0.206,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "medium",
+    "tags": [
+      "weak",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

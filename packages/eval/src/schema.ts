@@ -2,8 +2,9 @@ import { DecisionOption } from "@rebuttal/core";
 import { z } from "zod";
 
 /**
- * One labeled synthetic dispute. `dispute` + `evidence` are what the system sees;
- * `truth` is the hidden world the eval scores against; `label` is the human call.
+ * One labeled synthetic dispute (role doc Day 4). `dispute` + `evidence` are what the system
+ * sees; `label` is the human (or generator) call; `world` is the simulated buyer and PayPal
+ * the dollar figures are scored against. Stored as packages/eval/cases/<id>.json.
  */
 export const EvalEvidence = z.object({
   id: z.string(),
@@ -17,7 +18,6 @@ export type EvalEvidence = z.infer<typeof EvalEvidence>;
 export const EvalCase = z.object({
   id: z.string(),
   title: z.string(),
-  origin: z.enum(["hand", "generated"]),
   dispute: z.object({
     reason: z.string(),
     stage: z.string(),
@@ -32,22 +32,31 @@ export const EvalCase = z.object({
     ),
     items: z.array(z.string()),
   }),
+  /** The seller's records, in the connectors' EvidenceItem shape. */
   evidence: z.array(EvalEvidence),
-  truth: z.object({
-    /** The world's probability that fighting wins. */
+  label: z.object({
+    bestOption: DecisionOption,
+    /** Every option a reasonable seller could defend; always includes bestOption. */
+    acceptableOptions: z.array(DecisionOption).min(1),
+    expectedOutcomeIfFight: z.enum(["WIN", "LOSE"]),
+    notes: z.string().min(1),
+    labeler: z.string(),
+  }),
+  /** The simulated world: never shown to the system under test. */
+  world: z.object({
+    /** Probability that fighting wins (generated cases draw expectedOutcomeIfFight from it). */
     pWin: z.number().min(0).max(1),
-    /** Whether a fight actually wins in this world (drawn from pWin). */
-    wins: z.boolean(),
     /** Smallest partial-refund ratio the buyer accepts; above 1 means never. */
     buyerAcceptRatio: z.number().min(0),
-    /** Whether the buyer takes a full refund with return. */
     acceptsReturn: z.boolean(),
   }),
-  label: z.object({
-    option: DecisionOption,
-    rationale: z.string(),
-    /** Who labeled it. Draft labels await the team's independent labeling (plan Day 12). */
-    labeler: z.string(),
+  meta: z.object({
+    origin: z.enum(["hand", "generated", "injection"]),
+    author: z.string(),
+    difficulty: z.enum(["easy", "medium", "hard"]),
+    tags: z.array(z.string()),
   }),
 });
 export type EvalCase = z.infer<typeof EvalCase>;
+
+export const wins = (c: EvalCase): boolean => c.label.expectedOutcomeIfFight === "WIN";

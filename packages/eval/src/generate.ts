@@ -236,22 +236,34 @@ export function generateCases(seed = 20261019, count = 40): EvalCase[] {
     const c: EvalCase = {
       id,
       title: spec.title,
-      origin: "generated",
       dispute: dispute(spec),
       evidence: evidenceFor(reason, tier, digital, amountCents, new EvidenceBuilder(paidAt), r),
-      truth: { pWin: 0, wins: false, buyerAcceptRatio: 1.1, acceptsReturn: false },
       label: {
-        option: "ACCEPT",
-        rationale: "",
-        labeler: "generator: argmax EV under the world's true p_win",
+        bestOption: "ACCEPT",
+        acceptableOptions: ["ACCEPT"],
+        expectedOutcomeIfFight: "LOSE",
+        notes: "",
+        labeler: "generator: argmax EV under the world's p_win",
+      },
+      world: { pWin: 0, buyerAcceptRatio: 1.1, acceptsReturn: false },
+      meta: {
+        origin: "generated",
+        author: "generator",
+        difficulty: tier === "partial" ? "hard" : tier === "weak" ? "medium" : "easy",
+        tags: [
+          tier,
+          digital ? "digital" : "physical",
+          stage.toLowerCase(),
+          ...(injected ? ["injection"] : []),
+        ],
       },
     };
     const p = worldPWin(c, r);
     // Buyers are drawn from the same acceptance curve the engine assumes.
     const u = Math.min(0.999, Math.max(0.001, r.next()));
-    c.truth = {
+    c.label.expectedOutcomeIfFight = r.next() < p ? "WIN" : "LOSE";
+    c.world = {
       pWin: p,
-      wins: r.next() < p,
       buyerAcceptRatio: Math.max(
         0,
         Math.round((o.acceptMidpoint + (o.reasonShift[reason] ?? 0) + logit(u) / o.acceptSteepness) * 1000) /
@@ -261,8 +273,13 @@ export function generateCases(seed = 20261019, count = 40): EvalCase[] {
     };
     const tv = trueValues(c);
     const ev = (opt: string) => tv.values.find((v) => v.option === opt);
-    c.label.option = tv.best.option;
-    c.label.rationale =
+    // Options within $1 or 2% of the amount of the best EV are close calls a seller could defend.
+    const margin = Math.max(100, 0.02 * amountCents);
+    c.label.bestOption = tv.best.option;
+    c.label.acceptableOptions = tv.values.filter((v) => tv.best.ev - v.ev <= margin).map((v) => v.option);
+    if (!c.label.acceptableOptions.includes(tv.best.option))
+      c.label.acceptableOptions.unshift(tv.best.option);
+    c.label.notes =
       `World p_win ${p.toFixed(2)}: EV fight ${money(ev("FIGHT")!.ev)}` +
       (ev("OFFER") ? `, offer ${money(ev("OFFER")!.ev)}` : "") +
       `, accept ${money(ev("ACCEPT")?.ev ?? 0)}.` +

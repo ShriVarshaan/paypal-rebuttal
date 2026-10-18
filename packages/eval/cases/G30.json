@@ -1,0 +1,82 @@
+{
+  "id": "G30",
+  "title": "credit not processed, weak evidence, physical, chargeback",
+  "dispute": {
+    "reason": "CREDIT_NOT_PROCESSED",
+    "stage": "CHARGEBACK",
+    "amountCents": 17505,
+    "currency": "USD",
+    "paidAt": "2026-08-21T12:00:00.000Z",
+    "openedAt": "2026-09-26T12:00:00.000Z",
+    "dueAt": "2026-10-06T12:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-26T12:00:00.000Z",
+        "content": "You promised a refund weeks ago."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "msg-1",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-08-27T12:00:00.000Z",
+            "channel": "email",
+            "text": "I returned it and haven't been refunded."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-08-27T19:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.15: EV fight $-5.44, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.152,
+    "buyerAcceptRatio": 0.677,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "medium",
+    "tags": [
+      "weak",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

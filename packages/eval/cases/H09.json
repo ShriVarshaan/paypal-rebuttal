@@ -1,0 +1,101 @@
+{
+  "id": "H09",
+  "title": "Vague listing, specific complaint",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "INQUIRY",
+    "amountCents": 7500,
+    "currency": "USD",
+    "paidAt": "2026-09-10T15:00:00.000Z",
+    "openedAt": "2026-09-22T15:00:00.000Z",
+    "dueAt": "2026-10-02T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "make_offer": {
+        "offer_types": [
+          "REFUND",
+          "REFUND_WITH_RETURN"
+        ]
+      },
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-22T15:00:00.000Z",
+        "content": "The colour is much darker than the photos and the zip sticks."
+      }
+    ],
+    "items": [
+      "Waxed canvas jacket"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "lst-1",
+      "source": "storefront",
+      "type": "ITEM_DESCRIPTION",
+      "title": "Listing snapshot",
+      "data": {
+        "kind": "listing_snapshot",
+        "title": "Listing",
+        "description": "Jacket. Colours may vary.",
+        "capturedAt": "2026-09-04T15:00:00.000Z",
+        "orderedAt": "2026-09-10T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-16T15:00:00.000Z",
+            "channel": "email",
+            "text": "The colour is much darker than the photos and the zip sticks."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-16T22:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "OFFER",
+    "acceptableOptions": [
+      "OFFER",
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "We have the snapshot, but 'colours may vary' doesn't rebut a sticking zip. A partial refund is the better value.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.35,
+    "buyerAcceptRatio": 0.45,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "hard",
+    "tags": [
+      "vague-listing",
+      "inquiry"
+    ]
+  }
+}

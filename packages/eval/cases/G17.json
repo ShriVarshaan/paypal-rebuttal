@@ -1,0 +1,119 @@
+{
+  "id": "G17",
+  "title": "merchandise or service not as described, partial evidence, digital, pre_arbitration",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 1104,
+    "currency": "USD",
+    "paidAt": "2026-09-02T19:00:00.000Z",
+    "openedAt": "2026-09-30T19:00:00.000Z",
+    "dueAt": "2026-10-10T19:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-30T19:00:00.000Z",
+        "content": "This is not what the listing showed."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "lst-1",
+      "source": "storefront",
+      "type": "ITEM_DESCRIPTION",
+      "title": "Listing snapshot",
+      "data": {
+        "kind": "listing_snapshot",
+        "title": "Listing",
+        "description": "As pictured. See size chart.",
+        "capturedAt": "2026-09-04T19:00:00.000Z",
+        "orderedAt": "2026-09-02T19:00:00.000Z"
+      }
+    },
+    {
+      "id": "ord-2",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_2",
+        "placedAt": "2026-09-02T19:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-3",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 3 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 3,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-09-02T19:14:24.000Z",
+        "ipMatchesCheckout": true
+      }
+    },
+    {
+      "id": "msg-4",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (1)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-08T19:00:00.000Z",
+            "channel": "email",
+            "text": "It arrived damaged."
+          }
+        ],
+        "sellerReplied": false,
+        "firstSellerReplyHours": null,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "World p_win 0.33: EV fight $-23.78, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.33,
+    "buyerAcceptRatio": 0.32,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "digital",
+      "pre_arbitration"
+    ]
+  }
+}

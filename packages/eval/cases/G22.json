@@ -1,0 +1,97 @@
+{
+  "id": "G22",
+  "title": "unauthorised, partial evidence, physical, chargeback",
+  "dispute": {
+    "reason": "UNAUTHORISED",
+    "stage": "CHARGEBACK",
+    "amountCents": 84693,
+    "currency": "USD",
+    "paidAt": "2026-09-02T13:00:00.000Z",
+    "openedAt": "2026-09-19T13:00:00.000Z",
+    "dueAt": "2026-09-29T13:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-19T13:00:00.000Z",
+        "content": "I didn't make this purchase."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "trk-1",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: delivered",
+      "data": {
+        "trackingCode": "EZ1000007919",
+        "carrier": "USPS",
+        "status": "delivered",
+        "deliveredAt": "2026-09-05T13:00:00.000Z",
+        "deliveredTo": {
+          "zip": "95131"
+        },
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    },
+    {
+      "id": "rsk-2",
+      "source": "account",
+      "type": "ORDER_DETAILS",
+      "title": "Checkout verification",
+      "data": {
+        "kind": "checkout_risk",
+        "avsMatch": true,
+        "cvvMatch": true,
+        "ipMatch": false,
+        "deviceMatch": null
+      }
+    },
+    {
+      "id": "his-3",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 1,
+        "priorDisputes": 0
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.83: EV fight $690.28, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.832,
+    "buyerAcceptRatio": 0.277,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

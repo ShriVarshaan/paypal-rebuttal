@@ -1,0 +1,84 @@
+{
+  "id": "H18",
+  "title": "Two charges for two different orders",
+  "dispute": {
+    "reason": "DUPLICATE_TRANSACTION",
+    "stage": "CHARGEBACK",
+    "amountCents": 4000,
+    "currency": "USD",
+    "paidAt": "2026-09-19T15:00:00.000Z",
+    "openedAt": "2026-10-01T15:00:00.000Z",
+    "dueAt": "2026-10-11T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-19T15:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "distinctFromOtherCharge": true
+      }
+    },
+    {
+      "id": "ord-2",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_2",
+        "placedAt": "2026-09-19T15:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "distinctFromOtherCharge": true
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "Both order records show different items: not a duplicate.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.8,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "easy",
+    "tags": [
+      "duplicate"
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "id": "H16",
+  "title": "Pre-arbitration, verified checkout, first-time buyer",
+  "dispute": {
+    "reason": "UNAUTHORISED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 9500,
+    "currency": "USD",
+    "paidAt": "2026-09-17T15:00:00.000Z",
+    "openedAt": "2026-09-29T15:00:00.000Z",
+    "dueAt": "2026-10-09T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "trk-1",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: delivered",
+      "data": {
+        "trackingCode": "EZ1000007919",
+        "carrier": "USPS",
+        "status": "delivered",
+        "deliveredAt": "2026-09-20T15:00:00.000Z",
+        "deliveredTo": {
+          "zip": "95131"
+        },
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    },
+    {
+      "id": "rsk-2",
+      "source": "account",
+      "type": "ORDER_DETAILS",
+      "title": "Checkout verification",
+      "data": {
+        "kind": "checkout_risk",
+        "avsMatch": true,
+        "cvvMatch": true,
+        "ipMatch": null,
+        "deviceMatch": null
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "Verified checkout and delivery to the address on file make this better than even at $95.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.55,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "hard",
+    "tags": [
+      "pre-arbitration",
+      "first-time-buyer"
+    ]
+  }
+}

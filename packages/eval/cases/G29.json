@@ -1,0 +1,55 @@
+{
+  "id": "G29",
+  "title": "credit not processed, weak evidence, physical, pre_arbitration",
+  "dispute": {
+    "reason": "CREDIT_NOT_PROCESSED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 2582,
+    "currency": "USD",
+    "paidAt": "2026-07-03T16:00:00.000Z",
+    "openedAt": "2026-08-26T16:00:00.000Z",
+    "dueAt": "2026-09-05T16:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-08-26T16:00:00.000Z",
+        "content": "I returned it and haven't been refunded."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.10: EV fight $-30.56, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.105,
+    "buyerAcceptRatio": 0.76,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "medium",
+    "tags": [
+      "weak",
+      "physical",
+      "pre_arbitration"
+    ]
+  }
+}

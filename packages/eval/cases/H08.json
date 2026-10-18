@@ -1,0 +1,101 @@
+{
+  "id": "H08",
+  "title": "Listing changed after the order",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "INQUIRY",
+    "amountCents": 4000,
+    "currency": "USD",
+    "paidAt": "2026-09-09T15:00:00.000Z",
+    "openedAt": "2026-09-21T15:00:00.000Z",
+    "dueAt": "2026-10-01T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "make_offer": {
+        "offer_types": [
+          "REFUND",
+          "REFUND_WITH_RETURN"
+        ]
+      },
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-21T15:00:00.000Z",
+        "content": "The size chart was different when I ordered."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "lst-1",
+      "source": "storefront",
+      "type": "ITEM_DESCRIPTION",
+      "title": "Listing snapshot",
+      "data": {
+        "kind": "listing_snapshot",
+        "title": "Listing",
+        "description": "As pictured. See size chart.",
+        "capturedAt": "2026-09-13T15:00:00.000Z",
+        "orderedAt": "2026-09-09T15:00:00.000Z"
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-15T15:00:00.000Z",
+            "channel": "email",
+            "text": "The size chart was different when I ordered."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-15T22:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "OFFER",
+    "acceptableOptions": [
+      "OFFER",
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "Only a snapshot from after the edit exists, so it can't show what the buyer saw. Settle with a partial refund.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.25,
+    "buyerAcceptRatio": 0.55,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "medium",
+    "tags": [
+      "listing-changed",
+      "inquiry"
+    ]
+  }
+}

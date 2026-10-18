@@ -7,7 +7,7 @@ import {
   sigmoid,
   type WinWeights,
 } from "@rebuttal/decision";
-import type { EvalCase } from "./schema.js";
+import { wins, type EvalCase } from "./schema.js";
 import { toDecisionCase } from "./world.js";
 
 /**
@@ -44,7 +44,7 @@ function logLoss(cases: EvalCase[], w: WinWeights): number {
     const p = sigmoid(
       intercept(w, dc.reason, dc.stage) + FEATURES.reduce((s, f) => s + w.features[f] * x[f], 0),
     );
-    l -= c.truth.wins ? Math.log(Math.max(p, 1e-9)) : Math.log(Math.max(1 - p, 1e-9));
+    l -= wins(c) ? Math.log(Math.max(p, 1e-9)) : Math.log(Math.max(1 - p, 1e-9));
   }
   return l / cases.length;
 }
@@ -96,7 +96,7 @@ export function calibrate(
     return {
       x: FEATURES.map((f) => x[f]),
       base: intercept(prior, dc.reason, dc.stage),
-      y: c.truth.wins ? 1 : 0,
+      y: wins(c) ? 1 : 0,
     };
   });
   const w0 = FEATURES.map((f) => prior.features[f]);
@@ -130,7 +130,7 @@ export function calibrate(
   const round = (v: number) => Math.round(v * 1000) / 1000;
   return {
     weights: {
-      version: "calibrated-v1",
+      version: "v1",
       base: Object.fromEntries(Object.entries(prior.base).map(([k, v]) => [k, round(v + shift)])),
       stage: prior.stage,
       features: Object.fromEntries(FEATURES.map((f, i) => [f, round(w[i]!)])) as WinWeights["features"],

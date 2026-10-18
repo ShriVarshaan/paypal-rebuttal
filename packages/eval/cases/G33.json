@@ -1,0 +1,85 @@
+{
+  "id": "G33",
+  "title": "duplicate transaction, partial evidence, physical, chargeback",
+  "dispute": {
+    "reason": "DUPLICATE_TRANSACTION",
+    "stage": "CHARGEBACK",
+    "amountCents": 1021,
+    "currency": "USD",
+    "paidAt": "2026-08-05T14:00:00.000Z",
+    "openedAt": "2026-09-22T14:00:00.000Z",
+    "dueAt": "2026-10-02T14:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-22T14:00:00.000Z",
+        "content": "I was charged twice for the same thing."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-08-05T14:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "distinctFromOtherCharge": false
+      }
+    },
+    {
+      "id": "his-2",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 3,
+        "priorDisputes": 2
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.20: EV fight $-28.76, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.2,
+    "buyerAcceptRatio": 0.448,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

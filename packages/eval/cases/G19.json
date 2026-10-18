@@ -1,0 +1,86 @@
+{
+  "id": "G19",
+  "title": "merchandise or service not as described, partial evidence, physical, chargeback",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "stage": "CHARGEBACK",
+    "amountCents": 68697,
+    "currency": "USD",
+    "paidAt": "2026-09-02T20:00:00.000Z",
+    "openedAt": "2026-10-28T20:00:00.000Z",
+    "dueAt": "2026-11-07T20:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-10-28T20:00:00.000Z",
+        "content": "The material feels cheap and the size is wrong."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "pho-1",
+      "source": "storefront",
+      "type": "PHOTOS_OF_SHIPPED_ITEM",
+      "title": "Packing photos",
+      "data": {
+        "kind": "item_photos",
+        "photos": [
+          "a.jpg",
+          "b.jpg"
+        ]
+      }
+    },
+    {
+      "id": "trk-2",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: delivered",
+      "data": {
+        "trackingCode": "EZ1000015838",
+        "carrier": "USPS",
+        "status": "delivered",
+        "deliveredAt": "2026-09-05T20:00:00.000Z",
+        "deliveredTo": {
+          "zip": "95131"
+        },
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.09: EV fight $30.31, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.093,
+    "buyerAcceptRatio": 0.425,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

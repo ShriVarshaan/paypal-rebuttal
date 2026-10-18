@@ -1,0 +1,110 @@
+{
+  "id": "G26",
+  "title": "unauthorised, partial evidence, digital, chargeback",
+  "dispute": {
+    "reason": "UNAUTHORISED",
+    "stage": "CHARGEBACK",
+    "amountCents": 15757,
+    "currency": "USD",
+    "paidAt": "2026-07-07T20:00:00.000Z",
+    "openedAt": "2026-08-16T20:00:00.000Z",
+    "dueAt": "2026-08-26T20:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-08-16T20:00:00.000Z",
+        "content": "I didn't make this purchase."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-07-07T20:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-2",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 1 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 1,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-07-07T20:14:24.000Z",
+        "ipMatchesCheckout": false
+      }
+    },
+    {
+      "id": "rsk-3",
+      "source": "account",
+      "type": "ORDER_DETAILS",
+      "title": "Checkout verification",
+      "data": {
+        "kind": "checkout_risk",
+        "avsMatch": true,
+        "cvvMatch": true,
+        "ipMatch": false,
+        "deviceMatch": null
+      }
+    },
+    {
+      "id": "his-4",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 1,
+        "priorDisputes": 0
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "World p_win 0.89: EV fight $127.01, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.888,
+    "buyerAcceptRatio": 0.519,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "digital",
+      "chargeback"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "id": "G01",
+  "title": "merchandise or service not received, weak evidence, physical, pre_arbitration",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 9908,
+    "currency": "USD",
+    "paidAt": "2026-09-19T15:00:00.000Z",
+    "openedAt": "2026-10-09T15:00:00.000Z",
+    "dueAt": "2026-10-19T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-10-09T15:00:00.000Z",
+        "content": "Still waiting after three weeks."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "msg-1",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (1)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-25T15:00:00.000Z",
+            "channel": "email",
+            "text": "Tracking says delivered but there's nothing here."
+          }
+        ],
+        "sellerReplied": false,
+        "firstSellerReplyHours": null,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.04: EV fight $-31.00, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.04,
+    "buyerAcceptRatio": 0.5,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "medium",
+    "tags": [
+      "weak",
+      "physical",
+      "pre_arbitration"
+    ]
+  }
+}

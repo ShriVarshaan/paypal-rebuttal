@@ -1,0 +1,82 @@
+{
+  "id": "G37",
+  "title": "canceled recurring billing, weak evidence, physical, chargeback",
+  "dispute": {
+    "reason": "CANCELED_RECURRING_BILLING",
+    "stage": "CHARGEBACK",
+    "amountCents": 778,
+    "currency": "USD",
+    "paidAt": "2026-08-23T17:00:00.000Z",
+    "openedAt": "2026-10-17T17:00:00.000Z",
+    "dueAt": "2026-10-27T17:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-10-17T17:00:00.000Z",
+        "content": "I cancelled this subscription before this charge."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "msg-1",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-08-29T17:00:00.000Z",
+            "channel": "email",
+            "text": "I cancelled this subscription before this charge."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-08-30T00:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.25: EV fight $-27.45, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.253,
+    "buyerAcceptRatio": 0.398,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "medium",
+    "tags": [
+      "weak",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

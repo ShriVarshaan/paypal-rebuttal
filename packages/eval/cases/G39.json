@@ -1,0 +1,94 @@
+{
+  "id": "G39",
+  "title": "canceled recurring billing, partial evidence, physical, chargeback",
+  "dispute": {
+    "reason": "CANCELED_RECURRING_BILLING",
+    "stage": "CHARGEBACK",
+    "amountCents": 59456,
+    "currency": "USD",
+    "paidAt": "2026-08-15T08:00:00.000Z",
+    "openedAt": "2026-08-28T08:00:00.000Z",
+    "dueAt": "2026-09-07T08:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-08-28T08:00:00.000Z",
+        "content": "I cancelled this subscription before this charge."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "sub-1",
+      "source": "account",
+      "type": "BILLING_AGREEMENT",
+      "title": "Subscription record",
+      "data": {
+        "kind": "subscription",
+        "status": "cancelled",
+        "chargedAt": "2026-08-15T08:00:00.000Z",
+        "cancelledAt": "2026-08-11T08:00:00.000Z"
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-08-21T08:00:00.000Z",
+            "channel": "email",
+            "text": "I cancelled this subscription before this charge."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-08-21T15:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.14: EV fight $49.64, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.138,
+    "buyerAcceptRatio": 0.935,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "id": "H19",
+  "title": "Charged the amount agreed at checkout",
+  "dispute": {
+    "reason": "INCORRECT_AMOUNT",
+    "stage": "CHARGEBACK",
+    "amountCents": 5800,
+    "currency": "USD",
+    "paidAt": "2026-09-20T15:00:00.000Z",
+    "openedAt": "2026-10-02T15:00:00.000Z",
+    "dueAt": "2026-10-12T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-10-02T15:00:00.000Z",
+        "content": "I was charged more than the price shown."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-20T15:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "agreedAmountCents": 5800
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-26T15:00:00.000Z",
+            "channel": "email",
+            "text": "Where is my order?"
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-26T22:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "The checkout summary shows the buyer agreed to $58 including shipping.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.75,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "medium",
+    "tags": [
+      "incorrect-amount"
+    ]
+  }
+}

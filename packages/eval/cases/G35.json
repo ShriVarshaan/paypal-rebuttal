@@ -1,0 +1,74 @@
+{
+  "id": "G35",
+  "title": "incorrect amount, partial evidence, physical, chargeback",
+  "dispute": {
+    "reason": "INCORRECT_AMOUNT",
+    "stage": "CHARGEBACK",
+    "amountCents": 1567,
+    "currency": "USD",
+    "paidAt": "2026-09-15T11:00:00.000Z",
+    "openedAt": "2026-10-28T11:00:00.000Z",
+    "dueAt": "2026-11-07T11:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-10-28T11:00:00.000Z",
+        "content": "I was charged more than the price shown."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-09-15T11:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": false
+          }
+        ],
+        "agreedAmountCents": 1267
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.19: EV fight $-28.00, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.192,
+    "buyerAcceptRatio": 0.541,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "chargeback"
+    ]
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "id": "G32",
+  "title": "credit not processed, partial evidence, physical, pre_arbitration",
+  "dispute": {
+    "reason": "CREDIT_NOT_PROCESSED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 4770,
+    "currency": "USD",
+    "paidAt": "2026-08-14T10:00:00.000Z",
+    "openedAt": "2026-09-18T10:00:00.000Z",
+    "dueAt": "2026-09-28T10:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-18T10:00:00.000Z",
+        "content": "You promised a refund weeks ago."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "pol-1",
+      "source": "storefront",
+      "type": "RETURN_POLICY",
+      "title": "Return policy",
+      "data": {
+        "kind": "return_policy",
+        "returnWindowDays": 30
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-08-20T10:00:00.000Z",
+            "channel": "email",
+            "text": "I returned it and haven't been refunded."
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-08-20T17:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "World p_win 0.26: EV fight $-17.06, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.257,
+    "buyerAcceptRatio": 0.343,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "hard",
+    "tags": [
+      "partial",
+      "physical",
+      "pre_arbitration"
+    ]
+  }
+}

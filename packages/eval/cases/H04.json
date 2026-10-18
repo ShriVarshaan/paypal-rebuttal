@@ -1,0 +1,96 @@
+{
+  "id": "H04",
+  "title": "Parcel stuck in transit",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "CHARGEBACK",
+    "amountCents": 6000,
+    "currency": "USD",
+    "paidAt": "2026-09-05T15:00:00.000Z",
+    "openedAt": "2026-09-17T15:00:00.000Z",
+    "dueAt": "2026-09-27T15:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-09-17T15:00:00.000Z",
+        "content": "Tracking hasn't moved in two weeks."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "trk-1",
+      "source": "easypost",
+      "type": "PROOF_OF_FULFILLMENT",
+      "title": "Carrier tracking: in_transit",
+      "data": {
+        "trackingCode": "EZ1000007919",
+        "carrier": "USPS",
+        "status": "in_transit",
+        "deliveredAt": null,
+        "deliveredTo": null,
+        "shippingPostalCode": "95131",
+        "signedBy": null
+      }
+    },
+    {
+      "id": "msg-2",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (2)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-09-11T15:00:00.000Z",
+            "channel": "email",
+            "text": "Where is my order?"
+          },
+          {
+            "from": "SELLER",
+            "at": "2026-09-11T22:12:00.000Z",
+            "channel": "email",
+            "text": "Sorry about that — here's what our records show."
+          }
+        ],
+        "sellerReplied": true,
+        "firstSellerReplyHours": 7.2,
+        "buyerMessageCount": 1
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "ACCEPT",
+    "acceptableOptions": [
+      "ACCEPT"
+    ],
+    "expectedOutcomeIfFight": "LOSE",
+    "notes": "No delivery scan: the buyer is right. Fighting only adds a fee.",
+    "labeler": "B (draft)"
+  },
+  "world": {
+    "pWin": 0.15,
+    "buyerAcceptRatio": 1.1,
+    "acceptsReturn": false
+  },
+  "meta": {
+    "origin": "hand",
+    "author": "B",
+    "difficulty": "easy",
+    "tags": [
+      "physical",
+      "in-transit"
+    ]
+  }
+}

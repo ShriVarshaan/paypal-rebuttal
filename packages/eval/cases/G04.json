@@ -1,0 +1,117 @@
+{
+  "id": "G04",
+  "title": "merchandise or service not received, strong evidence, digital, pre_arbitration",
+  "dispute": {
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "stage": "PRE_ARBITRATION",
+    "amountCents": 3984,
+    "currency": "USD",
+    "paidAt": "2026-07-05T11:00:00.000Z",
+    "openedAt": "2026-08-27T11:00:00.000Z",
+    "dueAt": "2026-09-06T11:00:00.000Z",
+    "allowedResponseOptions": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "messages": [
+      {
+        "postedBy": "BUYER",
+        "postedAt": "2026-08-27T11:00:00.000Z",
+        "content": "Still waiting after three weeks."
+      }
+    ],
+    "items": [
+      "Item"
+    ]
+  },
+  "evidence": [
+    {
+      "id": "ord-1",
+      "source": "storefront",
+      "type": "ORDER_DETAILS",
+      "title": "Order record",
+      "data": {
+        "kind": "order",
+        "orderId": "ord_1",
+        "placedAt": "2026-07-05T11:00:00.000Z",
+        "items": [
+          {
+            "name": "Item",
+            "digital": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "acc-2",
+      "source": "download-log",
+      "type": "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+      "title": "Download log: 6 access(es)",
+      "data": {
+        "kind": "access_log",
+        "accessCount": 6,
+        "accessedAfterPurchase": true,
+        "firstAccessAt": "2026-07-05T11:14:24.000Z",
+        "ipMatchesCheckout": true
+      }
+    },
+    {
+      "id": "msg-3",
+      "source": "messages",
+      "type": "OTHER",
+      "title": "Buyer–seller messages (1)",
+      "data": {
+        "kind": "message_thread",
+        "messages": [
+          {
+            "from": "BUYER",
+            "at": "2026-07-11T11:00:00.000Z",
+            "channel": "email",
+            "text": "Tracking says delivered but there's nothing here."
+          }
+        ],
+        "sellerReplied": false,
+        "firstSellerReplyHours": null,
+        "buyerMessageCount": 1
+      }
+    },
+    {
+      "id": "his-4",
+      "source": "account",
+      "type": "OTHER",
+      "title": "Buyer history",
+      "data": {
+        "kind": "buyer_history",
+        "priorOrders": 3,
+        "priorDisputes": 3
+      }
+    }
+  ],
+  "label": {
+    "bestOption": "FIGHT",
+    "acceptableOptions": [
+      "FIGHT"
+    ],
+    "expectedOutcomeIfFight": "WIN",
+    "notes": "World p_win 0.88: EV fight $21.61, accept $-1.00.",
+    "labeler": "generator: argmax EV under the world's p_win"
+  },
+  "world": {
+    "pWin": 0.875,
+    "buyerAcceptRatio": 0.731,
+    "acceptsReturn": true
+  },
+  "meta": {
+    "origin": "generated",
+    "author": "generator",
+    "difficulty": "easy",
+    "tags": [
+      "strong",
+      "digital",
+      "pre_arbitration"
+    ]
+  }
+}

@@ -11,10 +11,12 @@
     "typecheck": "tsc -p .",
     "test": "vitest run --passWithNoTests",
     "eval": "tsx --env-file-if-exists=../../.env src/cli.ts run",
-    "eval:generate": "tsx src/cli.ts generate",
+    "eval:generate": "tsx --env-file-if-exists=../../.env src/cli.ts generate",
     "eval:calibrate": "tsx src/cli.ts calibrate",
     "eval:agreement": "tsx src/cli.ts agreement",
-    "eval:label-sheet": "tsx src/cli.ts label-sheet"
+    "eval:label-sheet": "tsx src/cli.ts label-sheet",
+    "eval:report": "tsx --env-file-if-exists=../../.env src/cli.ts report",
+    "eval:label": "tsx src/cli.ts label"
   },
   "dependencies": {
     "@rebuttal/core": "workspace:*",
