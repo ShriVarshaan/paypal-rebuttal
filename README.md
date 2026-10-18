@@ -39,6 +39,18 @@ pnpm e2e:sim                                           # the whole pipeline as a
 ```
 The simulator implements the same `PayPalClient` interface as the real client and keeps its state in `.sim/state.json`, which the api and worker share. It honours `PayPal-Request-Id` (a repeated key replays the first response) and enforces dispute state rules such as "offers only in INQUIRY". `SIMULATOR=1` and `WEBHOOK_SKIP_VERIFY=1` are refused when `NODE_ENV=production`.
 
+## Decisions, agents and evaluation
+The EV engine decides; Claude reads, advises and drafts (see [docs/decision-engine.md](docs/decision-engine.md) and [docs/writeup.md](docs/writeup.md)).
+
+```bash
+pnpm eval                      # 60 labeled cases → docs/eval-report.md (held-out accuracy, Brier, $, regret, injection set)
+pnpm eval --llm                # + Claude-only and hybrid rows (needs ANTHROPIC_API_KEY; spend-capped, cached)
+pnpm eval:label <your-name>    # blind labeling; then pnpm eval:agreement
+pnpm checkout                  # sandbox checkout for making real disputes (docs/sandbox-runbook.md)
+```
+
+Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the whole pipeline runs offline. Merchant policy (autonomy limits, fees, labour) is `GET/PUT /policy`.
+
 ## Architecture
 ```
  PayPal sandbox ──webhooks──▶ apps/api ── verify-webhook-signature, dedupe on event id
@@ -79,4 +91,4 @@ The simulator implements the same `PayPalClient` interface as the real client an
 | Webhooks `CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` | [apps/api/src/routes/webhooks.ts](apps/api/src/routes/webhooks.ts) |
 
 ## Status
-Platform (A) is built and tested: 99 tests, including a simulator end-to-end run. Waiting on B (core contract sign-off, triage, policy engine), C (Prisma schema sign-off, web UI, PDF packs) and live sandbox credentials. See `CLAUDE.md`.
+Platform (A) and intelligence (B) are built and tested (`pnpm test`: core, decision, connectors, agent, eval, MCP, worker, api, including a simulator end-to-end run with real triage). Waiting on C (web UI, PDF evidence packs, demo store), the team's sign-off on `packages/core` and the Prisma schema, the blind labeling round, and live sandbox credentials. See `CLAUDE.md`.

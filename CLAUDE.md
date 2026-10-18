@@ -9,7 +9,7 @@ Guidance for Claude Code when working in this repository.
 - Team roles: A = Platform & PayPal, B = Intelligence & Decisions, C = Product, Evidence & Demo (see `README.md`).
 
 ## Status
-Platform (A) is in place: monorepo, `packages/paypal`, api webhooks, worker jobs (sync, poll, enrich, gather, execute, SLA), simulator mode, Dockerfiles. `packages/core` and the Prisma schema are **drafts by A** for B and C to take over. `decision` has only a placeholder `safeDefault`; `agent`, `evidence`, `eval`, `apps/web` and `apps/demo-store` are empty. **Keep Commands and Layout current**, and never document commands that don't work yet.
+Platform (A) and intelligence (B) are in place: PayPal client, webhooks, worker jobs (sync, poll, enrich, gather, **triage**, execute, SLA, **appeal**), simulator mode, the evidence matrix, win model, EV/offer/policy engine, Claude agents, eval harness and an MCP server. `packages/core` and the Prisma schema are still drafts pending A + B + C sign-off. C's parts are not built yet: `packages/evidence` (PDF packs, so FIGHT decisions wait in FILING until `pack.ready` or the T-2h deadline), `apps/web` and `apps/demo-store` (the connectors read `fixtures/store/` until its API exists; see `packages/connectors/STORE_API.md`). **Keep Commands and Layout current**, and never document commands that don't work yet.
 
 ## Stack
 TypeScript everywhere · pnpm workspaces + turborepo · Next.js + AG Grid + shadcn/Tailwind (web) · Fastify (api) · pg-boss worker · Postgres + Prisma · zod for all schemas · Playwright (HTML→PDF, screenshots) + pdf-lib · Anthropic SDK · PayPal Agent Toolkit + REST.
@@ -17,22 +17,27 @@ TypeScript everywhere · pnpm workspaces + turborepo · Next.js + AG Grid + shad
 ## Layout
 ```
 apps/web          Next.js UI: AG Grid case queue, case detail, decisions, dashboard  (C; placeholder)
-apps/api          Fastify: /webhooks/paypal, /healthz, /cases, /decisions/:id/approve
-apps/worker       pg-boss jobs: dispute.sync/poll, case.enrich/gather, action.execute, pack.ready, sla.fire
-                  (case.triage is queued for B; register its handler next to startWorker)
+apps/api          Fastify: /webhooks/paypal, /healthz, /cases, /decisions/:id/approve,
+                  PATCH /decisions/:id, /policy, /cases/:id/triage, /cases/:id/buyer-message, /metrics/agents
+apps/worker       pg-boss jobs: dispute.sync/poll, case.enrich/gather, case.triage (B), action.execute,
+                  pack.ready, sla.fire, case.appeal (B)
+apps/mcp          Rebuttal MCP server for Claude Desktop: list/explain/approve (B, stretch)
 apps/demo-store   Mock seller store (C; placeholder)
-packages/core     zod domain types, money (integer cents), state enum  ← CONTRACT (draft, B owns)
+packages/core     zod contract: domain types, money, evidence matrix, policy, state machine,
+                  agent output + Decision analysis schemas  ← CONTRACT (draft, B owns)
 packages/db       Prisma schema + client (draft, C owns); partial unique index in the init migration
 packages/paypal   OAuth cache, retrying HTTP, Disputes (agent toolkit + REST), Orders, Payments,
                   webhook verify, multipart evidence checks, simulator, scrubber
-packages/connectors  EvidenceSource interface + EasyPost (and an offline stand-in)
-packages/decision win probability, EV, offer optimizer, policy engine (B; only safeDefault so far)
-packages/agent    Claude agents (B; empty)
+packages/connectors  EvidenceSource interface; EasyPost (+ offline stand-in), messages, download logs,
+                  account records over a StoreClient (demo-store API or fixtures/store)
+packages/decision signals → win model (weights.v0/v1.json) → EV + offer optimizer → autonomy policy
+packages/agent    Claude agents: triage, narrative, buyer message, appeal, Haiku classification (models.ts)
 packages/evidence PDF evidence pack generation (C; empty)
-packages/eval     eval harness (B; empty)
+packages/eval     60 labeled cases (cases/*.json), strategies, metrics, calibration, injection set, report
 packages/testkit  embedded Postgres for tests (no Docker needed)
-fixtures/         PayPal payloads for tests and SIMULATOR=1 (synthetic for now; see fixtures/README.md)
-scripts/          paypal-ping, sim-dispute, record-fixture, embedded-db, sandbox/* lifecycle helpers
+fixtures/         PayPal payloads and store records for tests and SIMULATOR=1 (see fixtures/README.md)
+scripts/          paypal-ping, checkout, sim-dispute, record-fixture, embedded-db, sandbox/* lifecycle helpers
+docs/             plan, roles, decision-engine.md, eval-report.md, sandbox-runbook.md, writeup.md, log/
 ```
 
 ## Commands
@@ -46,6 +51,10 @@ scripts/          paypal-ping, sim-dispute, record-fixture, embedded-db, sandbox
 - `pnpm sim:dispute <fixture> [--due-in-hours N]` | `pnpm sim:dispute list`: open a simulated dispute and post its webhook
 - `pnpm sandbox:require-evidence <id>`, `pnpm sandbox:adjudicate <id> seller|buyer`, `pnpm sandbox:lifecycle <id> [seller|buyer]`, `pnpm sandbox:add-tracking <orderId> <captureId> <code>`: work in both sandbox and simulator mode
 - `pnpm record:fixture dispute <id> <name>`: record and scrub a sandbox payload into `fixtures/paypal/`
+- `pnpm checkout`: sandbox checkout page on :3005 for making payments to dispute (docs/sandbox-runbook.md)
+- `pnpm eval [--llm] [--budget-usd N]`: score all strategies on the 60 cases; writes `docs/eval-report.md` and `packages/eval/reports/`. `--llm` adds the Claude rows (cached in `packages/eval/cache/`)
+- `pnpm eval:generate [--with-claude]`, `pnpm eval:calibrate` (writes `packages/decision/src/weights.v1.json`), `pnpm eval:label <name>` (blind labeling), `pnpm eval:agreement`, `pnpm eval:label-sheet`
+- `pnpm --filter @rebuttal/mcp start`: the MCP server on stdio (needs `API_URL`, `API_TOKEN`)
 
 ## Rules
 - **`packages/core` is the shared contract.** Don't change its exported types casually; such changes need all three teammates to approve. Other packages import types from core rather than redefining them.
@@ -64,6 +73,9 @@ scripts/          paypal-ping, sim-dispute, record-fixture, embedded-db, sandbox
 - Record new sandbox payloads into `fixtures/` (scrub emails/names) so others can work offline.
 - Worker jobs are plain functions taking `Deps` (`apps/worker/src/deps.ts`), so tests swap in the simulator and a recording queue. Integration tests use `setupTestEnv()` from `apps/worker/test/helpers.ts`.
 - Only the executor (`action.execute`) calls PayPal write endpoints for decisions; other code enqueues a job.
+- Agents run with `llm: null` (deterministic templates) unless `ANTHROPIC_API_KEY` is set; tests use a scripted fake `LlmClient` and never call the API.
+- Edit eval cases as JSON in `packages/eval/cases/`; never tune weights on the test split.
+- Run `prettier --write` on the files you changed, not whole directories (it reformats teammates' files).
 - Branches: `a/<topic>`, `b/<topic>`, `c/<topic>`; PRs into `main`, squash-merged. Run `/code-review` before opening a PR.
 - Commit messages: imperative, short subject line, reference the plan day when relevant (e.g. "Day 4: sync job").
 
