@@ -41,6 +41,56 @@ export function intelligenceRoutes(deps: AppDeps): FastifyPluginAsync {
       return { policy: parsed.data, isDefault: false, updatedAt: row.updatedAt };
     });
 
+    /** Claude cost dashboard (role doc Day 15): spend, cost per case, latency per agent. */
+    app.get("/metrics/agents", async (req) => {
+      const { days } = z
+        .object({ days: z.coerce.number().int().min(1).max(365).default(30) })
+        .parse(req.query);
+      const runs = await deps.db.agentRun.findMany({
+        where: { createdAt: { gte: new Date(Date.now() - days * 86_400_000) } },
+        select: {
+          agent: true,
+          caseId: true,
+          costUsd: true,
+          latencyMs: true,
+          inputTokens: true,
+          outputTokens: true,
+        },
+      });
+      const pct = (xs: number[], q: number) => {
+        const s = [...xs].sort((a, b) => a - b);
+        return s.length ? s[Math.min(s.length - 1, Math.floor(q * s.length))]! : null;
+      };
+      const total = runs.reduce((s, r) => s + r.costUsd, 0);
+      const cases = new Set(runs.flatMap((r) => (r.caseId ? [r.caseId] : []))).size;
+      const agents = [...new Set(runs.map((r) => r.agent))].sort();
+      return {
+        days,
+        calls: runs.length,
+        totalCostUsd: total,
+        cases,
+        costPerCaseUsd: cases ? total / cases : null,
+        byAgent: agents.map((agent) => {
+          const rs = runs.filter((r) => r.agent === agent);
+          return {
+            agent,
+            calls: rs.length,
+            costUsd: rs.reduce((s, r) => s + r.costUsd, 0),
+            inputTokens: rs.reduce((s, r) => s + r.inputTokens, 0),
+            outputTokens: rs.reduce((s, r) => s + r.outputTokens, 0),
+            p50LatencyMs: pct(
+              rs.map((r) => r.latencyMs),
+              0.5,
+            ),
+            p95LatencyMs: pct(
+              rs.map((r) => r.latencyMs),
+              0.95,
+            ),
+          };
+        }),
+      };
+    });
+
     app.post("/cases/:id/triage", async (req, reply) => {
       const { id } = z.object({ id: z.string() }).parse(req.params);
       if (!(await deps.db.case.findUnique({ where: { id }, select: { id: true } })))

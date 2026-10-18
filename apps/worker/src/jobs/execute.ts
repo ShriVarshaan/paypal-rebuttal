@@ -97,9 +97,12 @@ async function buildEvidence(
 
   const files: EvidenceFile[] = [];
   const byType = new Map<string, EvidenceEntry>();
+  // B's narrative carries a note per evidence_type; fall back to the decision note.
+  const notesByType =
+    (decision.narrative as { notesByType?: Record<string, string> } | null)?.notesByType ?? {};
   const entry = (type: string) => {
     let e = byType.get(type);
-    if (!e) byType.set(type, (e = { evidence_type: type, notes: decision.note }));
+    if (!e) byType.set(type, (e = { evidence_type: type, notes: notesByType[type] ?? decision.note }));
     return e;
   };
 

@@ -1,4 +1,4 @@
-import { llmFromEnv } from "@rebuttal/agent";
+import { llmFromEnv, messageClassifier } from "@rebuttal/agent";
 import { defaultSources } from "@rebuttal/connectors";
 import { createDb } from "@rebuttal/db";
 import { assertSafeForProduction, createPayPalClient } from "@rebuttal/paypal";
@@ -24,7 +24,14 @@ async function main() {
 
   await startWorker(
     boss,
-    defaultDeps({ db, paypal, queue: pgBossQueue(boss), log, sources: defaultSources(), llm }),
+    defaultDeps({
+      db,
+      paypal,
+      queue: pgBossQueue(boss),
+      log,
+      sources: defaultSources(process.env, { classifyMessages: messageClassifier(llm) }),
+      llm,
+    }),
     {
       pollCron: process.env["POLL_DISABLED"] === "1" ? false : "* * * * *",
     },

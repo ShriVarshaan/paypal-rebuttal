@@ -41,6 +41,7 @@ export function scoreCase(c: EvalCase, output: StrategyOutput): CaseResult {
       c.truth.pWin,
       policy.economics,
       policy.offer,
+      c.dispute.reason,
     ).ev;
   }
   if (!Number.isFinite(trueEv)) trueEv = realizedValue(c, output);

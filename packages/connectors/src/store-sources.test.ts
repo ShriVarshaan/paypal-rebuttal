@@ -140,3 +140,32 @@ describe("HTTP store client", () => {
     expect(await client.findOrder({})).toBeNull();
   });
 });
+
+describe("message classification hook", () => {
+  it("labels buyer messages only, and copes with the classifier being unavailable", async () => {
+    const c = fixtureCase("INV-1001", {
+      messages: [
+        {
+          postedBy: "BUYER",
+          postedAt: "2026-10-15T09:12:44.000Z",
+          content: "I never received my headphones.",
+        },
+      ],
+    });
+    const seen: string[][] = [];
+    const src = createMessagesSource(store, NOW, async (texts) => {
+      seen.push(texts);
+      return texts.map((_, i) => (i === 0 ? { label: "complaint_specific", confidence: 0.9 } : null));
+    });
+    const [item] = await src.gather(c);
+    const msgs = item!.data["messages"] as { from: string; classification?: unknown }[];
+    expect(seen[0]).toHaveLength(2);
+    expect(msgs.map((m) => [m.from, m.classification ?? null])).toEqual([
+      ["BUYER", { label: "complaint_specific", confidence: 0.9 }],
+      ["SELLER", null],
+      ["BUYER", null],
+    ]);
+    const [plain] = await createMessagesSource(store, NOW, async () => null).gather(c);
+    expect((plain!.data["messages"] as object[]).every((m) => !("classification" in m))).toBe(true);
+  });
+});

@@ -14,6 +14,8 @@ const pg = new EmbeddedPostgres({
   password: "rebuttal",
   port: Number(process.env.PGPORT ?? 5432),
   persistent: true,
+  // UTF-8 like production; on Windows initdb otherwise picks WIN1252 (only applies to a fresh .pgdata).
+  initdbFlags: ["--encoding=UTF8", "--locale=C"],
 });
 
 if (fresh) await pg.initialise();

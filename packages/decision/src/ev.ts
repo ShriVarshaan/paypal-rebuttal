@@ -27,9 +27,10 @@ export function evAccept(e: Economics): number {
 }
 
 /** Assumed buyer acceptance curve for an offer of `ratio` × amount (see OfferPolicy). */
-export function pAccept(ratio: number, type: OfferType, o: OfferPolicy): number {
+export function pAccept(ratio: number, type: OfferType, o: OfferPolicy, reason?: string): number {
   const r = type === "REFUND" ? ratio : type === "REFUND_WITH_REPLACEMENT" ? 0.5 : 1;
-  const base = 1 / (1 + Math.exp(-o.acceptSteepness * (r - o.acceptMidpoint)));
+  const mid = o.acceptMidpoint + (reason ? (o.reasonShift[reason] ?? 0) : 0);
+  const base = 1 / (1 + Math.exp(-o.acceptSteepness * (r - mid)));
   const penalty = type === "REFUND" ? 0 : o.returnAcceptPenalty;
   return Math.min(1, Math.max(0, base - penalty));
 }
@@ -58,8 +59,9 @@ export function evOffer(
   pWin: number,
   e: Economics,
   o: OfferPolicy,
+  reason?: string,
 ): { ev: number; pAccept: number } {
-  const p = pAccept(amountCents ? refundCents / amountCents : 0, type, o);
+  const p = pAccept(amountCents ? refundCents / amountCents : 0, type, o, reason);
   const accepted = offerValue(amountCents, refundCents, type, e) - labor(e, e.offerMinutes);
   return { ev: p * accepted + (1 - p) * evFight(amountCents, pWin, e), pAccept: p };
 }

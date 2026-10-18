@@ -15,6 +15,7 @@ import { extractSignals, type Signals } from "./signals.js";
 import type { DecisionCase } from "./types.js";
 import {
   CALIBRATED_WEIGHTS,
+  explain,
   HAND_WEIGHTS,
   predictWin,
   type WinPrediction,
@@ -118,6 +119,7 @@ export function chooseOption(
     digital: analysis.signals.digital,
     economics: e,
     offer: policy.offer,
+    reason: c.reason,
   });
 
   const candidates: { option: DecisionOption; ev: number }[] = [];
@@ -172,11 +174,17 @@ export function autonomy(input: {
   if (!a.options.includes(decision.option)) blockers.push(`${decision.option} always needs approval`);
   if (c.amount.cents > a.maxAmountCents)
     blockers.push(`amount above the ${a.maxAmountCents} auto-file limit`);
+  if (a.requireApprovalReasons.includes(c.reason)) blockers.push(`${c.reason} always needs approval`);
   if (decision.option === "FIGHT") {
     if (decision.pWin < a.minPWinToFight)
       blockers.push(`p_win ${decision.pWin.toFixed(2)} below ${a.minPWinToFight}`);
-    if (a.requireCompleteEvidence && !analysis.signals.completeness.requiredMet)
-      blockers.push(`missing required evidence: ${analysis.signals.completeness.missingRequired.join(", ")}`);
+    const completeness = analysis.signals.completeness;
+    if (a.requireCompleteEvidence && !completeness.requiredMet)
+      blockers.push(`missing required evidence: ${completeness.missingRequired.join(", ")}`);
+    if (completeness.score < a.minCompletenessToFight)
+      blockers.push(
+        `evidence completeness ${completeness.score.toFixed(2)} below ${a.minCompletenessToFight}`,
+      );
   }
   if (input.injectionSuspected) blockers.push("possible prompt injection: a human must review");
   return blockers.length
@@ -251,6 +259,7 @@ export function toDecisionAnalysis(
     pWinModel: d.analysis.prediction.pWin,
     pWin: d.decision.pWin,
     contributions: d.analysis.prediction.contributions,
+    rationale: explain(d.analysis.prediction),
     completeness: {
       score: c.score,
       requiredMet: c.requiredMet,

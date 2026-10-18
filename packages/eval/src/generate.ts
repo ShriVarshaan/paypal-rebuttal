@@ -254,9 +254,10 @@ export function generateCases(seed = 20261019, count = 40): EvalCase[] {
       wins: r.next() < p,
       buyerAcceptRatio: Math.max(
         0,
-        Math.round((o.acceptMidpoint + logit(u) / o.acceptSteepness) * 1000) / 1000,
+        Math.round((o.acceptMidpoint + (o.reasonShift[reason] ?? 0) + logit(u) / o.acceptSteepness) * 1000) /
+          1000,
       ),
-      acceptsReturn: r.next() < pAccept(1, "REFUND_WITH_RETURN", o),
+      acceptsReturn: r.next() < pAccept(1, "REFUND_WITH_RETURN", o, reason),
     };
     const tv = trueValues(c);
     const ev = (opt: string) => tv.values.find((v) => v.option === opt);

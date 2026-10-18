@@ -132,7 +132,10 @@ it(
 
     const actions = await db.action.findMany({ where: { caseId: c.id } });
     expect(actions.map((a) => [a.kind, a.status])).toEqual([["PROVIDE_EVIDENCE", "SUCCEEDED"]]);
-    expect(await db.slaJob.count({ where: { caseId: c.id, status: "SCHEDULED" } })).toBe(0);
+    // sync commits WON first and cancels the SLA jobs right after, so wait for it.
+    await expect
+      .poll(() => db.slaJob.count({ where: { caseId: c.id, status: "SCHEDULED" } }), { timeout: 10_000 })
+      .toBe(0);
   },
 );
 

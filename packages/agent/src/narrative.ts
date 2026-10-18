@@ -2,7 +2,7 @@ import { NarrativeClaim, type AgentUsage, type Exhibit, type Narrative } from "@
 import { clampNote } from "@rebuttal/decision";
 import { z } from "zod";
 import { caseBrief, exhibitDetail, exhibitIndex, type AgentCase, type AgentEvidence } from "./context.js";
-import { AgentError, runStructured, type LlmClient } from "./llm.js";
+import { AgentError, runStructured, type Budget, type LlmClient } from "./llm.js";
 import { UNTRUSTED_RULES } from "./untrusted.js";
 
 const SYSTEM = `You write the seller's statement for a PayPal dispute the seller has decided to contest. The reader is a PayPal dispute specialist.
@@ -76,14 +76,38 @@ const HEADLINES: Record<string, string> = {
   CANCELED_RECURRING_BILLING: "The subscription was active when this charge was made.",
 };
 
+/**
+ * The provide-evidence request has one note per evidence_type: the headline plus the claims
+ * that cite exhibits of that type.
+ */
+export function notesByEvidenceType(
+  headline: string,
+  claims: Narrative["claims"],
+  exhibits: readonly Exhibit[],
+): Record<string, string> {
+  const typeOf = new Map(exhibits.map((e) => [e.exhibitId, e.type]));
+  const byType = new Map<string, string[]>();
+  for (const k of claims)
+    for (const t of new Set(k.exhibits.map((id) => typeOf.get(id)).filter((t): t is string => !!t)))
+      byType.set(t, [...(byType.get(t) ?? []), `- ${k.text} (${k.exhibits.join(", ")})`]);
+  return Object.fromEntries([...byType].map(([t, lines]) => [t, clampNote([headline, ...lines].join("\n"))]));
+}
+
 /** Deterministic statement from exhibit summaries: offline mode and the fallback. */
-export function templateNarrative(c: AgentCase, exhibits: readonly Exhibit[]): Narrative {
+export function templateNarrative(
+  c: AgentCase,
+  exhibits: readonly Exhibit[],
+  opts: { needsReview?: boolean } = {},
+): Narrative {
   const claims = exhibits.slice(0, 8).map((e) => ({ text: `${e.summary}.`, exhibits: [e.exhibitId] }));
+  const headline = HEADLINES[c.reason] ?? "The seller contests this dispute based on the records below.";
   return {
-    headline: HEADLINES[c.reason] ?? "The seller contests this dispute based on the records below.",
+    headline,
     claims,
     source: "template",
     rejectedClaims: 0,
+    needsReview: opts.needsReview ?? false,
+    notesByType: notesByEvidenceType(headline, claims, exhibits),
   };
 }
 
@@ -98,10 +122,15 @@ export interface NarrativeOutcome {
   error: string | null;
 }
 
+/**
+ * Claude drafts; the validator keeps only cited, grounded claims. Two failed drafts fall back
+ * to the template with needsReview set, so a human rewrites it before filing.
+ */
 export async function writeNarrative(
   llm: LlmClient | null,
   c: AgentCase,
   ev: AgentEvidence,
+  opts: { budget?: Budget } = {},
 ): Promise<NarrativeOutcome> {
   if (!llm || !ev.exhibits.length)
     return { narrative: templateNarrative(c, ev.exhibits), usage: [], error: null };
@@ -118,6 +147,7 @@ export async function writeNarrative(
         prompt: `Case facts:\n${facts}\n\nExhibits:\n${exhibitIndex(ev)}\n\nExhibit data:\n${details}${feedback}\n\nReturn the statement JSON.`,
         schema: NarrativeOutput,
         effort: "medium",
+        ...(opts.budget ? { budget: opts.budget } : {}),
       });
       usage.push(...res.usage);
       const checks = checkClaims(res.output.claims, ev, facts);
@@ -131,6 +161,8 @@ export async function writeNarrative(
             claims: kept,
             source: "claude",
             rejectedClaims: rejected.length,
+            needsReview: false,
+            notesByType: notesByEvidenceType(res.output.headline, kept, ev.exhibits),
           },
           usage,
           error: null,
@@ -140,8 +172,9 @@ export async function writeNarrative(
     }
     throw new AgentError("narrative: too many claims failed validation");
   } catch (err) {
+    if (err instanceof AgentError) usage.push(...err.usage);
     return {
-      narrative: templateNarrative(c, ev.exhibits),
+      narrative: templateNarrative(c, ev.exhibits, { needsReview: true }),
       usage,
       error: err instanceof Error ? err.message : String(err),
     };

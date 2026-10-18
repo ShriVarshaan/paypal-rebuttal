@@ -80,6 +80,7 @@ export function trueValues(c: EvalCase, policy: Policy = DEFAULT_POLICY) {
     digital,
     economics: e,
     offer: policy.offer,
+    reason: c.dispute.reason,
   });
   const values: { option: DecisionOption; ev: number }[] = [];
   if (allowed.accept) values.push({ option: "ACCEPT", ev: evAccept(e) });

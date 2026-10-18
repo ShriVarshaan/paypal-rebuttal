@@ -39,7 +39,7 @@ afterAll(async () => {
 });
 beforeEach(async () => {
   sent.length = 0;
-  await db.$executeRawUnsafe(`TRUNCATE "Decision", "CaseEvent", "Case", "Policy" CASCADE`);
+  await db.$executeRawUnsafe(`TRUNCATE "Decision", "CaseEvent", "Case", "Policy", "AgentRun" CASCADE`);
 });
 
 async function seed(option: "FIGHT" | "OFFER" = "OFFER") {
@@ -176,5 +176,31 @@ describe("triage and buyer message", () => {
     expect(r).toMatchObject({ source: "template", decisionId: d.id, error: null });
     expect(r.message).toContain("$39.00");
     expect(r.message).toContain("Waxed canvas jacket");
+  });
+});
+
+describe("agent metrics", () => {
+  it("summarizes spend and latency per agent", async () => {
+    const { c } = await seed();
+    const run = (agent: string, costUsd: number, latencyMs: number) => ({
+      caseId: c.id,
+      agent,
+      model: "claude-opus-5-5",
+      inputTokens: 1000,
+      outputTokens: 100,
+      costUsd,
+      latencyMs,
+    });
+    await db.agentRun.createMany({
+      data: [run("triage", 0.02, 900), run("triage", 0.04, 1500), run("narrative", 0.03, 2000)],
+    });
+    const r = (await api.inject({ method: "GET", url: "/metrics/agents", headers })).json();
+    expect(r).toMatchObject({ calls: 3, cases: 1 });
+    expect(r.totalCostUsd).toBeCloseTo(0.09);
+    expect(r.costPerCaseUsd).toBeCloseTo(0.09);
+    expect(r.byAgent).toEqual([
+      expect.objectContaining({ agent: "narrative", calls: 1, p50LatencyMs: 2000 }),
+      expect.objectContaining({ agent: "triage", calls: 2, p50LatencyMs: 1500, p95LatencyMs: 1500 }),
+    ]);
   });
 });

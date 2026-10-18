@@ -150,3 +150,33 @@ export function predictWin(c: DecisionCase, s: Signals, w: WinWeights = HAND_WEI
       .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution)),
   };
 }
+
+const LABELS: Record<string, [string, string]> = {
+  base_rate: ["Base rate for this reason and stage", "Base rate for this reason and stage"],
+  completeness: ["Evidence completeness above average", "Evidence completeness below average"],
+  required_met: ["All required evidence present", "Required evidence missing"],
+  delivery_proof: ["Delivered to the shipping address on file", "Delivery proof"],
+  signature: ["Signature confirmation", "Signature confirmation"],
+  shipment_problem: ["Shipment problem", "Parcel not delivered or returned"],
+  no_tracking: ["Tracking", "No delivery confirmation"],
+  digital_access: ["Download/access logged after purchase", "Download/access log"],
+  listing_snapshot: ["Listing snapshot from order time", "Listing snapshot"],
+  item_photos: ["Photos of the item as shipped", "Photos"],
+  seller_responsive: ["Seller replied to the buyer", "Seller didn't reply"],
+  checkout_verified: ["AVS/CVV check passed", "Checkout check"],
+  device_ip_match: ["Known device or IP", "Device/IP"],
+  repeat_customer: ["Repeat customer with undisputed orders", "Customer history"],
+  fraud_signals: ["Fraud signals", "Fraud signals (AVS mismatch, unknown device, other address)"],
+  buyer_dispute_history: ["Buyer dispute history", "Buyer has disputed before"],
+  refund_proof: ["Refund already issued", "Refund"],
+  late_dispute: ["Dispute opened long after purchase", "Dispute timing"],
+  amount_log: ["Small amount", "Larger amounts get more scrutiny"],
+};
+
+/** "Delivered to the shipping address on file: +1.10" — the why behind p_win, largest first. */
+export function explain(p: WinPrediction): string[] {
+  return p.contributions.map((k) => {
+    const [up, down] = LABELS[k.feature] ?? [k.feature, k.feature];
+    return `${k.contribution >= 0 ? up : down}: ${k.contribution >= 0 ? "+" : "−"}${Math.abs(k.contribution).toFixed(2)}`;
+  });
+}

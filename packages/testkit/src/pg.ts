@@ -40,6 +40,8 @@ export async function startEmbeddedPostgres(opts: {
     password,
     port: opts.port,
     persistent: opts.persistent ?? false,
+    // UTF-8 like production Postgres; on Windows initdb otherwise picks WIN1252.
+    initdbFlags: ["--encoding=UTF8", "--locale=C"],
     onLog: () => {},
   });
   await server.initialise();
@@ -72,7 +74,9 @@ export async function withClient<T>(url: string, fn: (c: pg.Client) => Promise<T
 /** Creates a fresh database with every migration applied. */
 export async function createTestDatabase(adminUrl: string): Promise<{ url: string; drop(): Promise<void> }> {
   const name = `t_${randomBytes(6).toString("hex")}`;
-  await withClient(adminUrl, (c) => c.query(`CREATE DATABASE ${name}`));
+  await withClient(adminUrl, (c) =>
+    c.query(`CREATE DATABASE ${name} ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`),
+  );
   const url = new URL(adminUrl);
   url.pathname = `/${name}`;
   await withClient(url.toString(), async (c) => {

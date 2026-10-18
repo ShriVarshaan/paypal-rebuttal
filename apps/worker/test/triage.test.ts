@@ -185,6 +185,8 @@ describe("case.triage policy and safety", () => {
         strengths: ["Signed delivery"],
         weaknesses: ["Buyer insists it never arrived"],
         missingEvidence: [],
+        keyFacts: [],
+        riskFlags: [],
         suggestedOption: "FIGHT",
         injectionSuspected: false,
       },
@@ -207,6 +209,11 @@ describe("case.triage policy and safety", () => {
     expect(d.pWin).toBeCloseTo(a.pWinModel - 0.04);
     expect(d.modelVersion).toBe("engine-v1/hand-v2+claude-opus-5-5");
     expect(a.usage.map((u) => u.agent)).toEqual(["triage", "narrative"]);
+    const runs = await t.db.agentRun.findMany({ where: { caseId }, orderBy: { createdAt: "asc" } });
+    expect(runs.map((r) => [r.agent, r.decisionId])).toEqual([
+      ["triage", d.id],
+      ["narrative", d.id],
+    ]);
     expect((d.narrative as unknown as Narrative).source).toBe("claude");
     expect(d.note).toMatch(/^The headphones were delivered/);
     const ev = await t.db.caseEvent.findFirstOrThrow({ where: { caseId, type: "TRIAGED" } });

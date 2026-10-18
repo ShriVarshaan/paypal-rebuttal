@@ -5,6 +5,9 @@ export const MODELS = {
 } as const;
 export type ModelRole = keyof typeof MODELS;
 
+/** Most a single case may spend on Claude (triage + narrative + drafts) before falling back to templates. */
+export const MAX_COST_PER_CASE_USD = 0.75;
+
 /** USD per million tokens (Anthropic first-party pricing, cached 2026-10). */
 export const PRICES: Record<
   string,

@@ -9,12 +9,16 @@ import {
 import type { EvidenceType } from "./paypal-enums.js";
 
 /**
- * Reason → evidence matrix (plan §3). For each dispute reason, the evidence that wins it,
- * whether it is required, and how to recognise it among gathered EvidenceItems.
+ * Reason → evidence matrix (plan §3, docs/roles/person-b-intelligence.md Day 3). For each
+ * dispute reason: the evidence that wins it, how much it matters, and how to recognise it
+ * among gathered EvidenceItems.
  *
- * The human judgement calls live here: which items are required, the $750 signature
- * threshold (PayPal Seller Protection asks for signature confirmation at that amount), and
- * the weights behind the completeness score. Change them in review, not in passing.
+ * Tiers: **required** (without it p_win drops sharply), **strong** (raises p_win), **nice**
+ * (helps the story). Completeness weighs them 0.6 / 0.3 / 0.1.
+ *
+ * The human judgement calls live here. Signature confirmation is strong above $250 and
+ * required from $750, where PayPal Seller Protection demands it. Change them in review,
+ * not in passing.
  */
 
 export interface MatrixContext {
@@ -24,7 +28,7 @@ export interface MatrixContext {
   digital: boolean;
 }
 
-export type RequirementLevel = "required" | "optional";
+export type RequirementLevel = "required" | "strong" | "nice";
 
 export interface EvidenceRequirement {
   id: string;
@@ -38,11 +42,13 @@ export interface EvidenceRequirement {
   satisfiedBy(e: EvidenceLike): boolean;
 }
 
-/** Above this amount a not-received claim also needs signature confirmation. */
+/** From this amount a not-received claim needs signature confirmation (PayPal Seller Protection). */
 export const SIGNATURE_THRESHOLD_CENTS = 75_000;
+/** Above this amount signature confirmation is strong evidence. */
+export const SIGNATURE_STRONG_CENTS = 25_000;
 
-const REQUIRED_WEIGHT = 3;
-const OPTIONAL_WEIGHT = 1;
+/** Share of the completeness score each tier carries. */
+export const TIER_WEIGHTS: Record<RequirementLevel, number> = { required: 0.6, strong: 0.3, nice: 0.1 };
 
 const is = (kind: EvidenceKind) => (e: EvidenceLike) => evidenceKind(e) === kind;
 
@@ -104,6 +110,15 @@ const REQ = {
       is("access_log")(e) &&
       dataBool(e, "accessedAfterPurchase") === true &&
       (dataNumber(e, "accessCount") ?? 0) > 0,
+  }),
+  digitalIpMatch: (level: RequirementLevel): EvidenceRequirement => ({
+    id: "digital_ip_match",
+    label: "Accessed from the IP used at checkout",
+    hint: "Include the IP addresses in the access log alongside the checkout IP.",
+    paypalEvidenceType: "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+    kind: "access_log",
+    level,
+    satisfiedBy: (e) => is("access_log")(e) && dataBool(e, "ipMatchesCheckout") === true,
   }),
   listingAtOrder: (level: RequirementLevel): EvidenceRequirement => ({
     id: "listing_snapshot_at_order",
@@ -193,6 +208,15 @@ const REQ = {
     level,
     satisfiedBy: is("refund"),
   }),
+  refundOrPolicy: (level: RequirementLevel): EvidenceRequirement => ({
+    id: "refund_or_policy",
+    label: "Refund record, or a policy showing no credit was due",
+    hint: "Attach the refund record; if no refund was owed, attach the return policy that applied.",
+    paypalEvidenceType: "PROOF_OF_REFUND",
+    kind: "refund",
+    level,
+    satisfiedBy: (e) => is("refund")(e) || is("return_policy")(e),
+  }),
   distinctOrders: (level: RequirementLevel): EvidenceRequirement => ({
     id: "distinct_orders",
     label: "Both charges belong to separate orders",
@@ -234,6 +258,15 @@ const REQ = {
       return cancelled === null || (charged !== null && cancelled > charged);
     },
   }),
+  usageAfterCharge: (level: RequirementLevel): EvidenceRequirement => ({
+    id: "usage_after_charge",
+    label: "The buyer kept using the service after the charge",
+    hint: "Export usage or access logs after the disputed charge.",
+    paypalEvidenceType: "PROOF_FOR_SOFTWARE_OR_SERVICE_DELIVERED",
+    kind: "access_log",
+    level,
+    satisfiedBy: (e) => is("access_log")(e) && (dataNumber(e, "accessCount") ?? 0) > 0,
+  }),
   singlePayment: (level: RequirementLevel): EvidenceRequirement => ({
     id: "single_payment",
     label: "Order was paid only once, through PayPal",
@@ -245,51 +278,62 @@ const REQ = {
   }),
 };
 
+const signatureLevel = (amountCents: number): RequirementLevel =>
+  amountCents >= SIGNATURE_THRESHOLD_CENTS
+    ? "required"
+    : amountCents > SIGNATURE_STRONG_CENTS
+      ? "strong"
+      : "nice";
+
+/** The matrix as data: reason → its requirements, given the amount and physical vs digital. */
+export const evidenceMatrix: Record<string, (ctx: MatrixContext) => EvidenceRequirement[]> = {
+  MERCHANDISE_OR_SERVICE_NOT_RECEIVED: (ctx) =>
+    ctx.digital
+      ? [
+          REQ.digitalAccess("required"),
+          REQ.digitalIpMatch("strong"),
+          REQ.orderDetails("nice"),
+          REQ.messages("nice"),
+        ]
+      : [
+          REQ.carrierDelivered("required"),
+          REQ.deliveredToAddress("strong"),
+          REQ.signature(signatureLevel(ctx.amountCents)),
+          REQ.orderDetails("nice"),
+          REQ.messages("nice"),
+        ],
+  MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: (ctx) => [
+    REQ.listingAtOrder("required"),
+    REQ.messages("strong"),
+    REQ.returnPolicy("strong"),
+    REQ.photos("strong"),
+    ctx.digital ? REQ.digitalAccess("nice") : REQ.carrierDelivered("nice"),
+  ],
+  UNAUTHORISED: (ctx) => [
+    ctx.digital ? REQ.digitalAccess("required") : REQ.deliveredToAddress("required"),
+    REQ.repeatCustomer("strong"),
+    REQ.deviceOrIp("strong"),
+    REQ.checkoutVerification("strong"),
+  ],
+  CREDIT_NOT_PROCESSED: () => [REQ.refundOrPolicy("required"), REQ.messages("strong")],
+  DUPLICATE_TRANSACTION: () => [REQ.distinctOrders("required"), REQ.refundIssued("nice")],
+  INCORRECT_AMOUNT: (ctx) => [REQ.agreedAmount("required", ctx.amountCents), REQ.messages("nice")],
+  CANCELED_RECURRING_BILLING: () => [
+    REQ.billingTerms("required"),
+    REQ.notCancelledBeforeCharge("required"),
+    REQ.usageAfterCharge("strong"),
+    REQ.messages("nice"),
+  ],
+  PAYMENT_BY_OTHER_MEANS: () => [REQ.singlePayment("required"), REQ.refundIssued("nice")],
+};
+
+const FALLBACK = () => [REQ.orderDetails("nice"), REQ.messages("nice")];
+const TIERS: RequirementLevel[] = ["required", "strong", "nice"];
+
 /** The requirements that apply to one dispute, required first. */
 export function requirementsFor(ctx: MatrixContext): EvidenceRequirement[] {
-  const R = REQ;
-  const out = ((): EvidenceRequirement[] => {
-    switch (ctx.reason) {
-      case "MERCHANDISE_OR_SERVICE_NOT_RECEIVED":
-        return ctx.digital
-          ? [R.digitalAccess("required"), R.orderDetails("optional"), R.messages("optional")]
-          : [
-              R.carrierDelivered("required"),
-              R.deliveredToAddress("required"),
-              R.signature(ctx.amountCents >= SIGNATURE_THRESHOLD_CENTS ? "required" : "optional"),
-              R.orderDetails("optional"),
-              R.messages("optional"),
-            ];
-      case "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED":
-        return [
-          R.listingAtOrder("required"),
-          R.messages("optional"),
-          R.returnPolicy("optional"),
-          R.photos("optional"),
-          ...(ctx.digital ? [R.digitalAccess("optional")] : [R.carrierDelivered("optional")]),
-        ];
-      case "UNAUTHORISED":
-        return [
-          R.checkoutVerification("required"),
-          ctx.digital ? R.digitalAccess("required") : R.deliveredToAddress("required"),
-          R.deviceOrIp("optional"),
-          R.repeatCustomer("optional"),
-        ];
-      case "CREDIT_NOT_PROCESSED":
-        return [R.refundIssued("required"), R.returnPolicy("optional"), R.messages("optional")];
-      case "DUPLICATE_TRANSACTION":
-        return [R.distinctOrders("required"), R.refundIssued("optional")];
-      case "INCORRECT_AMOUNT":
-        return [R.agreedAmount("required", ctx.amountCents), R.messages("optional")];
-      case "CANCELED_RECURRING_BILLING":
-        return [R.billingTerms("required"), R.notCancelledBeforeCharge("required"), R.messages("optional")];
-      case "PAYMENT_BY_OTHER_MEANS":
-        return [R.singlePayment("required"), R.refundIssued("optional")];
-      default:
-        return [R.orderDetails("optional"), R.messages("optional")];
-    }
-  })();
-  return [...out.filter((r) => r.level === "required"), ...out.filter((r) => r.level === "optional")];
+  const reqs = (evidenceMatrix[ctx.reason] ?? FALLBACK)(ctx);
+  return [...reqs].sort((a, b) => TIERS.indexOf(a.level) - TIERS.indexOf(b.level));
 }
 
 export interface RequirementResult {
@@ -304,18 +348,18 @@ export interface RequirementResult {
 }
 
 export interface CompletenessReport {
-  /** Weighted share of applicable requirements met, 0..1. Required items weigh 3, optional 1. */
+  /** 0..1: each tier's share of met requirements, weighted 0.6 / 0.3 / 0.1 over the tiers present. */
   score: number;
   requiredMet: boolean;
   requirements: RequirementResult[];
   missingRequired: string[];
+  /** Missing strong then nice items. */
   missingOptional: string[];
 }
 
 /** Evidence completeness score: what's there and what's missing before anything is filed. */
 export function assessCompleteness(ctx: MatrixContext, items: readonly EvidenceLike[]): CompletenessReport {
-  const reqs = requirementsFor(ctx);
-  const results: RequirementResult[] = reqs.map((r) => {
+  const results: RequirementResult[] = requirementsFor(ctx).map((r) => {
     const by = items.flatMap((e, i) => (r.satisfiedBy(e) ? [e.id ?? String(i)] : []));
     return {
       id: r.id,
@@ -327,16 +371,27 @@ export function assessCompleteness(ctx: MatrixContext, items: readonly EvidenceL
       satisfiedBy: by,
     };
   });
-  const weight = (r: RequirementResult) => (r.level === "required" ? REQUIRED_WEIGHT : OPTIONAL_WEIGHT);
-  const total = results.reduce((s, r) => s + weight(r), 0);
-  const met = results.reduce((s, r) => s + (r.met ? weight(r) : 0), 0);
+  let weight = 0;
+  let score = 0;
+  for (const tier of TIERS) {
+    const inTier = results.filter((r) => r.level === tier);
+    if (!inTier.length) continue;
+    weight += TIER_WEIGHTS[tier];
+    score += (TIER_WEIGHTS[tier] * inTier.filter((r) => r.met).length) / inTier.length;
+  }
   const missing = (level: RequirementLevel) =>
     results.filter((r) => r.level === level && !r.met).map((r) => r.id);
   return {
-    score: total ? met / total : 0,
+    score: weight ? score / weight : 0,
     requiredMet: missing("required").length === 0,
     requirements: results,
     missingRequired: missing("required"),
-    missingOptional: missing("optional"),
+    missingOptional: [...missing("strong"), ...missing("nice")],
   };
+}
+
+/** Score plus the requirements still missing (the role doc's `completenessScore`). */
+export function completenessScore(ctx: MatrixContext, items: readonly EvidenceLike[]) {
+  const r = assessCompleteness(ctx, items);
+  return { score: r.score, missing: r.requirements.filter((q) => !q.met) };
 }

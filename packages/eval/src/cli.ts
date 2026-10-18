@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- command-line tool */
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { llmFromEnv } from "@rebuttal/agent";

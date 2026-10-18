@@ -1,5 +1,8 @@
 import {
+  AgentError,
+  Budget,
   injectionSignals,
+  MAX_COST_PER_CASE_USD,
   narrativeToNote,
   runTriage,
   untrustedText,
@@ -39,6 +42,22 @@ export type TriageJobResult =
   | { status: "skipped"; reason: string };
 
 export const POLICY_ID = "default";
+
+/** AgentRun rows for the cost dashboard. */
+export function agentRuns(usage: AgentUsage[], caseId: string, decisionId: string | null) {
+  return usage.map((u) => ({
+    caseId,
+    decisionId,
+    agent: u.agent,
+    model: u.model,
+    inputTokens: u.inputTokens,
+    outputTokens: u.outputTokens,
+    cacheReadTokens: u.cacheReadTokens,
+    cacheWriteTokens: u.cacheWriteTokens,
+    costUsd: u.costUsd,
+    latencyMs: Math.round(u.latencyMs),
+  }));
+}
 
 export async function loadPolicy(deps: Pick<Deps, "db">) {
   const row = await deps.db.policy.findUnique({ where: { id: POLICY_ID } });
@@ -116,14 +135,16 @@ export async function triageCase(deps: Deps, caseId: string): Promise<TriageJobR
   const errors: string[] = [];
 
   let triage: TriageResult | null = null;
+  const budget = new Budget(MAX_COST_PER_CASE_USD);
   if (deps.llm && policy.llm.enabled) {
     try {
       const analysis = analyzeCase(c, items, policy);
-      const out = await runTriage(deps.llm, { c, evidence: ev, analysis, policy });
+      const out = await runTriage(deps.llm, { c, evidence: ev, analysis, policy, budget });
       triage = out.result;
       usage.push(...out.usage);
     } catch (err) {
       // Claude is an enhancement: without it the math still decides.
+      if (err instanceof AgentError) usage.push(...err.usage);
       errors.push(`triage: ${err instanceof Error ? err.message : String(err)}`);
       deps.log.warn({ caseId, err: errors.at(-1) }, "triage agent failed; using the model alone");
     }
@@ -143,7 +164,7 @@ export async function triageCase(deps: Deps, caseId: string): Promise<TriageJobR
   let narrative: Narrative | null = null;
   let note: string;
   if (d.option === "FIGHT") {
-    const out = await writeNarrative(deps.llm, c, ev);
+    const out = await writeNarrative(deps.llm, c, ev, { budget });
     usage.push(...out.usage);
     if (out.error) errors.push(`narrative: ${out.error}`);
     narrative = out.narrative;
@@ -227,6 +248,7 @@ export async function triageCase(deps: Deps, caseId: string): Promise<TriageJobR
           message: `${row.paypalDisputeId}: recommend ${d.option} (p_win ${d.decision.pWin.toFixed(2)}), approval needed${heuristics.length ? "; buyer text looks like a prompt-injection attempt" : ""}`,
         },
       });
+    if (usage.length) await tx.agentRun.createMany({ data: agentRuns(usage, caseId, created.id) });
     return created;
   });
 

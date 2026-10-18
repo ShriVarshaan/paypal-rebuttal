@@ -2,7 +2,7 @@ import type { AgentUsage, BuyerMessageDraft, DecisionOption, Money, OfferType } 
 import { money } from "@rebuttal/decision";
 import { z } from "zod";
 import { caseBrief, type AgentCase } from "./context.js";
-import { runStructured, type LlmClient } from "./llm.js";
+import { AgentError, runStructured, type LlmClient } from "./llm.js";
 import { UNTRUSTED_RULES } from "./untrusted.js";
 
 const SYSTEM = `You draft a short message from a small online seller to a buyer who opened a PayPal dispute. The seller reviews it before it is sent through PayPal.
@@ -79,6 +79,10 @@ export async function draftBuyerMessage(
       ? { draft: fallback, usage, error: `draft rejected: ${problem}` }
       : { draft: { message: output.message, source: "claude" }, usage, error: null };
   } catch (err) {
-    return { draft: fallback, usage: [], error: err instanceof Error ? err.message : String(err) };
+    return {
+      draft: fallback,
+      usage: err instanceof AgentError ? err.usage : [],
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }

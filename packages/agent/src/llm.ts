@@ -30,6 +30,22 @@ export function llmFromEnv(env: NodeJS.ProcessEnv = process.env): LlmClient | nu
 
 export class AgentError extends Error {
   override readonly name = "AgentError";
+  /** Calls already made (and paid for) before the failure. */
+  constructor(
+    message: string,
+    readonly usage: AgentUsage[] = [],
+  ) {
+    super(message);
+  }
+}
+
+/** A spend cap shared by every call it is passed to (per case in the worker, per run in the eval). */
+export class Budget {
+  spentUsd = 0;
+  constructor(readonly limitUsd: number) {}
+  get exhausted(): boolean {
+    return this.spentUsd >= this.limitUsd;
+  }
 }
 
 /** A read-only tool the model may call. Inputs are validated before `run`. */
@@ -51,6 +67,7 @@ export interface StructuredCall<T> {
   maxTokens?: number;
   /** Tool-use round trips before giving up. */
   maxTurns?: number;
+  budget?: Budget;
 }
 
 export interface StructuredResult<T> {
@@ -58,7 +75,7 @@ export interface StructuredResult<T> {
   usage: AgentUsage[];
 }
 
-function toolDef(t: AgentTool): Anthropic.Beta.Messages.BetaTool {
+function toolDef(t: AgentTool, last: boolean): Anthropic.Beta.Messages.BetaTool {
   const schema = z.toJSONSchema(t.input) as Record<string, unknown>;
   return {
     name: t.name,
@@ -68,6 +85,8 @@ function toolDef(t: AgentTool): Anthropic.Beta.Messages.BetaTool {
       properties: (schema["properties"] ?? {}) as Record<string, unknown>,
       required: (schema["required"] ?? []) as string[],
     },
+    // Cache breakpoint after the tool list: tools + system are the same on every turn.
+    ...(last ? { cache_control: { type: "ephemeral" as const } } : {}),
   };
 }
 
@@ -101,14 +120,17 @@ export async function runStructured<T>(
   const { parse: _parse, ...format } = zodOutputFormat(call.schema as z.ZodType);
   let corrections = 0;
 
+  const fail = (msg: string) => new AgentError(`${call.agent}: ${msg}`, usage);
+
   for (let turn = 0; turn < (call.maxTurns ?? 6) + 2; turn++) {
+    if (call.budget?.exhausted) throw fail(`budget of ${call.budget.limitUsd} exhausted`);
     const started = Date.now();
     const res = await llm.create({
       model,
       max_tokens: call.maxTokens ?? 16000,
-      system: call.system,
+      system: [{ type: "text", text: call.system, cache_control: { type: "ephemeral" } }],
       messages,
-      ...(tools.length ? { tools: tools.map(toolDef) } : {}),
+      ...(tools.length ? { tools: tools.map((t, i) => toolDef(t, i === tools.length - 1)) } : {}),
       output_config: { effort: call.effort ?? "medium", format },
       // Opus: if a safety classifier declines, the API retries on its default fallback model.
       ...(call.role === "reasoning"
@@ -128,17 +150,17 @@ export async function runStructured<T>(
       costUsd: costUsd(res.model, u, model),
       latencyMs: Date.now() - started,
     });
+    if (call.budget) call.budget.spentUsd += usage.at(-1)!.costUsd;
 
     if (res.stop_reason === "refusal")
-      throw new AgentError(`${call.agent}: model declined (${res.stop_details?.category ?? "unknown"})`);
-    if (res.stop_reason === "max_tokens")
-      throw new AgentError(`${call.agent}: output truncated at max_tokens`);
+      throw fail(`model declined (${res.stop_details?.category ?? "unknown"})`);
+    if (res.stop_reason === "max_tokens") throw fail("output truncated at max_tokens");
 
     const toolUses = res.content.filter(
       (b): b is Anthropic.Beta.Messages.BetaToolUseBlock => b.type === "tool_use",
     );
     if (res.stop_reason === "tool_use" && toolUses.length) {
-      if (turn >= (call.maxTurns ?? 6)) throw new AgentError(`${call.agent}: too many tool calls`);
+      if (turn >= (call.maxTurns ?? 6)) throw fail("too many tool calls");
       messages.push({ role: "assistant", content: res.content });
       const results: ToolResult[] = toolUses.map((b) => {
         const r = runTool(tools, b.name, b.input);
@@ -165,12 +187,12 @@ export async function runStructured<T>(
     } catch {
       problem = "response was not valid JSON";
     }
-    if (corrections++ >= 1) throw new AgentError(`${call.agent}: invalid output (${problem})`);
+    if (corrections++ >= 1) throw fail(`invalid output (${problem})`);
     messages.push({ role: "assistant", content: res.content });
     messages.push({
       role: "user",
       content: `That output failed validation: ${problem}. Return the corrected JSON only.`,
     });
   }
-  throw new AgentError(`${call.agent}: no final answer`);
+  throw fail("no final answer");
 }

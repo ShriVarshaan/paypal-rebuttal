@@ -33,6 +33,8 @@ export function optimizeOffer(input: {
   digital: boolean;
   economics: Economics;
   offer: OfferPolicy;
+  /** Dispute reason, for the acceptance curve's per-reason shift. */
+  reason?: string;
 }): OfferChoice | null {
   const { amountCents, pWin, economics: e, offer: o } = input;
   const types = input.allowedTypes.filter((t) => !(input.digital && PHYSICAL_ONLY.has(t)));
@@ -40,7 +42,7 @@ export function optimizeOffer(input: {
 
   let best: OfferChoice | null = null;
   const consider = (type: OfferType, refundCents: number) => {
-    const { ev, pAccept } = evOffer(amountCents, refundCents, type, pWin, e, o);
+    const { ev, pAccept } = evOffer(amountCents, refundCents, type, pWin, e, o, input.reason);
     // Ties go to the cheaper offer.
     if (
       !best ||

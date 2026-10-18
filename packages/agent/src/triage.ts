@@ -9,15 +9,16 @@ import {
   type AgentCase,
   type AgentEvidence,
 } from "./context.js";
-import { runStructured, type AgentTool, type LlmClient } from "./llm.js";
+import { runStructured, type AgentTool, type Budget, type LlmClient } from "./llm.js";
 import { injectionSignals, UNTRUSTED_RULES } from "./untrusted.js";
 
 const SYSTEM = `You triage PayPal disputes for a small online seller. A calibrated statistical model has already estimated the seller's probability of winning (p_win) from the evidence, and an expected-value engine will choose whether to fight, offer a partial refund or accept. You do not choose the action and you do not set amounts.
 
 Your job is to read the case and the evidence with the tools, then report:
-- a short summary,
+- a short summary and the key facts, each with the exhibit id that shows it,
 - strengths and weaknesses of the seller's position,
 - the evidence that would most improve the case,
+- risk flags a human should look at (inconsistencies, unusual buyer behaviour, weak or contradictory evidence),
 - an optional adjustment to p_win between -0.10 and +0.10, only when the evidence shows something the model's features can't see (for example, tracking delivered to a different city than the buyer's address, or a buyer message admitting they received the item). Every adjustment must cite exhibit ids (EX-n) that support it. Use 0 when you have no specific, evidence-backed reason.
 - suggestedOption is your advisory view only.
 
@@ -30,6 +31,7 @@ export interface TriageInput {
   evidence: AgentEvidence;
   analysis: CaseAnalysis;
   policy: Policy;
+  budget?: Budget;
 }
 
 export interface TriageOutcome {
@@ -43,6 +45,11 @@ const dollars = (cents: number) => Math.round(cents) / 100;
 
 export function triageTools(input: TriageInput): AgentTool[] {
   const { c, evidence, analysis, policy } = input;
+  const ofKind = (kind: string) =>
+    evidence.exhibits
+      .filter((e) => e.kind === kind)
+      .map((e) => exhibitDetail(evidence, e.exhibitId))
+      .join("\n\n") || `No ${kind.replace("_", " ")} on file.`;
   return [
     {
       name: "get_case",
@@ -59,6 +66,19 @@ export function triageTools(input: TriageInput): AgentTool[] {
         typeof i["exhibit_id"] === "string"
           ? exhibitDetail(evidence, i["exhibit_id"])
           : exhibitIndex(evidence),
+    },
+    {
+      name: "get_listing_snapshot",
+      description:
+        "The listing as captured around the order time (title, description, photos, capture date).",
+      input: z.object({}),
+      run: () => ofKind("listing_snapshot"),
+    },
+    {
+      name: "get_messages",
+      description: "The buyer–seller message thread (store email and the PayPal dispute thread).",
+      input: z.object({}),
+      run: () => ofKind("message_thread"),
     },
     {
       name: "get_matrix_requirements",
@@ -116,7 +136,11 @@ Use the tools to inspect the case and any exhibits you need, then return the tri
     tools: triageTools(input),
     effort: "medium",
     maxTurns: 8,
+    ...(input.budget ? { budget: input.budget } : {}),
   });
+  // Facts must point at real exhibits; drop the ones that don't rather than show them.
+  const known = new Set(input.evidence.exhibits.map((e) => e.exhibitId));
+  const result = { ...output, keyFacts: output.keyFacts.filter((f) => known.has(f.exhibitId)) };
   const heuristics = injectionSignals(untrustedText(input.c, input.evidence));
-  return { result: heuristics.length ? { ...output, injectionSuspected: true } : output, heuristics, usage };
+  return { result: heuristics.length ? { ...result, injectionSuspected: true } : result, heuristics, usage };
 }

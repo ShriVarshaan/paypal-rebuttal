@@ -1,29 +1,70 @@
 import type { AgentUsage } from "@rebuttal/core";
 import { z } from "zod";
+import { AgentError, runStructured, type Budget, type LlmClient } from "./llm.js";
 import { fence, UNTRUSTED_RULES } from "./untrusted.js";
-import { runStructured, type LlmClient } from "./llm.js";
 
-/** Cheap read of the buyer's messages (Haiku): shown in the UI and fed to triage as context. */
-export const BuyerMessageClass = z.object({
-  intent: z.enum(["refund_request", "item_missing", "item_problem", "fraud_claim", "question", "other"]),
-  acknowledgesReceipt: z.boolean().describe("The buyer says they received the item."),
-  tone: z.enum(["calm", "frustrated", "hostile"]),
+/**
+ * Per-message labels for the buyer's side of the thread (Haiku; role doc Day 6). Shown in
+ * the UI and to the triage agent as context. They never feed p_win directly: only the
+ * triage agent's cited, bounded nudge can do that.
+ */
+export const MessageLabel = z.enum([
+  "admits_receipt",
+  "complaint_specific",
+  "threatening",
+  "asks_refund",
+  "neutral",
+]);
+export type MessageLabel = z.infer<typeof MessageLabel>;
+
+const Output = z.object({
+  messages: z
+    .array(
+      z.object({
+        index: z.number().int().nonnegative(),
+        label: MessageLabel,
+        confidence: z.number().min(0).max(1),
+      }),
+    )
+    .max(50),
   injectionSuspected: z.boolean(),
 });
-export type BuyerMessageClass = z.infer<typeof BuyerMessageClass>;
+export type MessageClassification = z.infer<typeof Output>;
 
-export async function classifyBuyerMessages(
+export async function classifyMessages(
   llm: LlmClient,
-  text: string,
-): Promise<{ result: BuyerMessageClass; usage: AgentUsage[] }> {
+  texts: string[],
+  opts: { budget?: Budget } = {},
+): Promise<{ result: MessageClassification; usage: AgentUsage[] }> {
+  const numbered = texts.map((t, i) => `[${i}] ${t.slice(0, 2000)}`).join("\n");
   const { output, usage } = await runStructured(llm, {
     agent: "classify",
     role: "extraction",
-    system: `Classify a buyer's messages about a disputed online order.\n\n${UNTRUSTED_RULES}`,
-    prompt: `${fence("buyer_messages", text.slice(0, 8000))}\n\nReturn the classification JSON.`,
-    schema: BuyerMessageClass,
+    system: `Label each of a buyer's messages about a disputed online order with one of: admits_receipt (says they received the item), complaint_specific (a concrete problem with the item or delivery), threatening (threats or abuse), asks_refund (asks for money back), neutral. Give your confidence from 0 to 1. Use the [n] index of each message.\n\n${UNTRUSTED_RULES}`,
+    prompt: `${fence("buyer_messages", numbered)}\n\nReturn the labels JSON.`,
+    schema: Output,
     effort: "low",
-    maxTokens: 2000,
+    maxTokens: 4000,
+    ...(opts.budget ? { budget: opts.budget } : {}),
   });
-  return { result: output, usage };
+  // Keep one label per known message index.
+  const seen = new Set<number>();
+  const messages = output.messages.filter(
+    (m) => m.index < texts.length && !seen.has(m.index) && (seen.add(m.index), true),
+  );
+  return { result: { ...output, messages }, usage };
+}
+
+/** Adapter for the messages connector: labels per text, or null when Claude is unavailable. */
+export function messageClassifier(llm: LlmClient | null) {
+  if (!llm) return undefined;
+  return async (texts: string[]) => {
+    try {
+      const { result } = await classifyMessages(llm, texts);
+      return texts.map((_, i) => result.messages.find((m) => m.index === i) ?? null);
+    } catch (err) {
+      if (err instanceof AgentError) return null;
+      throw err;
+    }
+  };
 }

@@ -1,7 +1,7 @@
 import { NarrativeClaim, type AgentUsage, type AppealDraft, type CompletenessReport } from "@rebuttal/core";
 import { z } from "zod";
 import { caseBrief, exhibitDetail, exhibitIndex, type AgentCase, type AgentEvidence } from "./context.js";
-import { runStructured, type LlmClient } from "./llm.js";
+import { AgentError, runStructured, type LlmClient } from "./llm.js";
 import { checkClaims } from "./narrative.js";
 import { UNTRUSTED_RULES } from "./untrusted.js";
 
@@ -61,6 +61,10 @@ export async function draftAppeal(
       .map((k) => k.claim);
     return { draft: { ...output, claims, source: "claude" }, usage, error: null };
   } catch (err) {
-    return { draft: fallback, usage: [], error: err instanceof Error ? err.message : String(err) };
+    return {
+      draft: fallback,
+      usage: err instanceof AgentError ? err.usage : [],
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }

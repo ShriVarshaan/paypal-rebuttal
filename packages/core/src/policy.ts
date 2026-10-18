@@ -14,8 +14,12 @@ export const AutonomyPolicy = z.object({
   minPWinToFight: z.number().min(0).max(1).default(0.8),
   /** Options the engine may file without approval. */
   options: z.array(DecisionOption).default(["FIGHT", "ACCEPT"]),
-  /** Never auto-file when a required piece of evidence is missing. */
+  /** Never auto-file a FIGHT when a required piece of evidence is missing. */
   requireCompleteEvidence: z.boolean().default(true),
+  /** A FIGHT also needs this evidence completeness score to auto-file. */
+  minCompletenessToFight: z.number().min(0).max(1).default(0.8),
+  /** Dispute reasons that always need a human, whatever the numbers say. */
+  requireApprovalReasons: z.array(z.string()).default([]),
 });
 export type AutonomyPolicy = z.infer<typeof AutonomyPolicy>;
 
@@ -51,6 +55,13 @@ export const OfferPolicy = z.object({
   acceptSteepness: z.number().positive().default(9),
   /** Buyers are less keen when they must ship the item back. */
   returnAcceptPenalty: z.number().min(0).max(1).default(0.15),
+  /**
+   * Shift of the curve's midpoint by dispute reason. Not-as-described buyers usually want
+   * compensation and accept less; not-received buyers want the item or all their money.
+   */
+  reasonShift: z
+    .record(z.string(), z.number().min(-0.5).max(0.5))
+    .default({ MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED: -0.05, MERCHANDISE_OR_SERVICE_NOT_RECEIVED: 0.1 }),
 });
 export type OfferPolicy = z.infer<typeof OfferPolicy>;
 

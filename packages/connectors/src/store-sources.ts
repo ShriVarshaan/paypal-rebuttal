@@ -69,9 +69,15 @@ export function threadStats(thread: ThreadMessage[]) {
   };
 }
 
+/** Labels buyer messages (e.g. Haiku via @rebuttal/agent's messageClassifier); null = unavailable. */
+export type MessageClassifier = (
+  texts: string[],
+) => Promise<({ label: string; confidence: number } | null)[] | null>;
+
 export function createMessagesSource(
   store: StoreClient | null,
   now: () => Date = () => new Date(),
+  classify?: MessageClassifier,
 ): EvidenceSource {
   return {
     id: "messages",
@@ -80,6 +86,12 @@ export function createMessagesSource(
       const order = store ? await store.findOrder(orderRef(c)) : null;
       const thread = mergeThread(c, order && store ? await store.messages(order.id) : []);
       if (!thread.length) return [];
+      const buyer = thread.filter((m) => m.from === "BUYER");
+      const labels = classify && buyer.length ? await classify(buyer.map((m) => m.text)) : null;
+      const messages = thread.map((m) => {
+        const i = buyer.indexOf(m);
+        return i >= 0 && labels?.[i] ? { ...m, classification: labels[i] } : m;
+      });
       return [
         {
           source: "messages",
@@ -90,7 +102,7 @@ export function createMessagesSource(
           data: {
             kind: "message_thread",
             orderId: order?.id ?? null,
-            messages: thread,
+            messages,
             ...threadStats(thread),
           },
         },

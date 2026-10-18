@@ -3,7 +3,7 @@ import { assignExhibits } from "@rebuttal/core";
 import { analyzeCase } from "@rebuttal/decision";
 import { json } from "../case-row.js";
 import { PermanentJobError, type Deps } from "../deps.js";
-import { agentCase, loadPolicy, toEvidenceLike } from "./triage.js";
+import { agentCase, agentRuns, loadPolicy, toEvidenceLike } from "./triage.js";
 
 /**
  * case.appeal: when a case is LOST, explain why and what new evidence would help, and
@@ -48,6 +48,7 @@ export async function appealCase(deps: Deps, caseId: string): Promise<{ status: 
         message: `${row.paypalDisputeId}: lost; appeal draft ready (${out.draft.recommendAppeal ? "appeal recommended" : "appeal not recommended"})`,
       },
     }),
+    deps.db.agentRun.createMany({ data: agentRuns(out.usage, caseId, null) }),
   ]);
   return { status: "drafted" };
 }

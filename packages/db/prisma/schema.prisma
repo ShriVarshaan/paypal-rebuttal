@@ -112,6 +112,7 @@ model Case {
   packs         EvidencePack[]
   notifications Notification[]
   slaJobs       SlaJob[]
+  agentRuns     AgentRun[]
 
   @@index([state])
   @@index([sellerResponseDueAt])
@@ -253,6 +254,26 @@ model SlaJob {
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([caseId, status])
+}
+
+/// One Claude call (B): tokens, cost and latency for the cost dashboard (role doc Day 8/15).
+model AgentRun {
+  id               String   @id @default(cuid())
+  caseId           String?
+  case             Case?    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  decisionId       String?
+  agent            String
+  model            String
+  inputTokens      Int
+  outputTokens     Int
+  cacheReadTokens  Int      @default(0)
+  cacheWriteTokens Int      @default(0)
+  costUsd          Float
+  latencyMs        Int
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([agent, createdAt])
+  @@index([caseId])
 }
 
 /// Merchant policy (Policy in @rebuttal/core): autonomy rules and EV assumptions. One row, id "default".

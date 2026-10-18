@@ -6,7 +6,7 @@ import { z } from "zod";
 import { checkBuyerMessage, draftBuyerMessage, templateBuyerMessage } from "./buyer-message.js";
 import { draftAppeal } from "./appeal.js";
 import type { AgentCase, AgentEvidence } from "./context.js";
-import { AgentError, runStructured, type LlmClient } from "./llm.js";
+import { AgentError, Budget, runStructured, type LlmClient } from "./llm.js";
 import { costUsd } from "./models.js";
 import { checkClaims, narrativeToNote, templateNarrative, writeNarrative } from "./narrative.js";
 import { runTriage } from "./triage.js";
@@ -102,6 +102,8 @@ const triageJson = {
   strengths: ["Signed delivery"],
   weaknesses: [],
   missingEvidence: [],
+  keyFacts: [],
+  riskFlags: [],
   suggestedOption: "FIGHT",
   injectionSuspected: false,
 };
@@ -208,9 +210,15 @@ describe("triage agent", () => {
     expect(llm.calls[0]!.tools!.map((t) => (t as { name: string }).name)).toEqual([
       "get_case",
       "get_evidence",
+      "get_listing_snapshot",
+      "get_messages",
       "get_matrix_requirements",
       "compute_ev",
     ]);
+    // Prompt caching: system prompt and the tool list end in cache breakpoints.
+    expect(llm.calls[0]!.system).toEqual([expect.objectContaining({ cache_control: { type: "ephemeral" } })]);
+    expect(llm.calls[0]!.tools!.at(-1)).toHaveProperty("cache_control", { type: "ephemeral" });
+    expect(llm.calls[0]!.tools![0]).not.toHaveProperty("cache_control");
     const results = llm.calls[1]!.messages.at(-1)!.content as { content: string }[];
     expect(results[0]!.content).toContain("EZ4000000004");
     expect(JSON.parse(results[1]!.content)).toMatchObject({
@@ -363,5 +371,55 @@ describe("untrusted input", () => {
         cacheWriteTokens: 0,
       }),
     ).toBe(4);
+  });
+});
+
+describe("budgets, facts and review flags", () => {
+  const analysis = analyzeCase(c, items, DEFAULT_POLICY);
+
+  it("stops calling Claude once the budget is spent", async () => {
+    const budget = new Budget(0.005);
+    const llm = scripted(toolUse("get_case", {}), text(triageJson));
+    await expect(
+      runTriage(llm, { c, evidence: ev, analysis, policy: DEFAULT_POLICY, budget }),
+    ).rejects.toThrow(/budget/);
+    expect(llm.calls).toHaveLength(1);
+    expect(budget.spentUsd).toBeCloseTo((1000 * 4 + 200 * 20) / 1e6);
+  });
+
+  it("drops key facts that cite exhibits that don't exist", async () => {
+    const withFacts = {
+      ...triageJson,
+      keyFacts: [
+        { fact: "Signed delivery", exhibitId: "EX-1" },
+        { fact: "Invented", exhibitId: "EX-9" },
+      ],
+    };
+    const out = await runTriage(scripted(text(withFacts)), {
+      c,
+      evidence: ev,
+      analysis,
+      policy: DEFAULT_POLICY,
+    });
+    expect(out.result.keyFacts).toEqual([{ fact: "Signed delivery", exhibitId: "EX-1" }]);
+  });
+
+  it("flags the template for review after two failed drafts and keeps the usage", async () => {
+    const bad = {
+      headline: "x",
+      claims: [{ text: "Tracking ZZ99999999999 delivered.", exhibits: ["EX-1"] }],
+    };
+    const out = await writeNarrative(scripted(text(bad), text(bad)), c, ev);
+    expect(out.narrative).toMatchObject({ source: "template", needsReview: true });
+    expect(out.usage).toHaveLength(2);
+    const offline = await writeNarrative(null, c, ev);
+    expect(offline.narrative.needsReview).toBe(false);
+  });
+
+  it("writes one note per evidence type", async () => {
+    const notes = (await writeNarrative(null, c, ev)).narrative.notesByType;
+    expect(Object.keys(notes).sort()).toEqual(["OTHER", "PROOF_OF_FULFILLMENT"]);
+    expect(notes["PROOF_OF_FULFILLMENT"]).toMatch(/EZ4000000004.*(EX-1)/);
+    expect(notes["PROOF_OF_FULFILLMENT"]).not.toContain("EX-2");
   });
 });

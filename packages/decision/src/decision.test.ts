@@ -13,7 +13,7 @@ import { safeDefault } from "./index.js";
 import { optimizeOffer } from "./offer.js";
 import { extractSignals, isDigital } from "./signals.js";
 import { ev, testCase } from "./testing.js";
-import { HAND_WEIGHTS, features, predictWin } from "./win-model.js";
+import { HAND_WEIGHTS, explain as explainLines, features, predictWin } from "./win-model.js";
 
 const E = Economics.parse({});
 const O = OfferPolicy.parse({});
@@ -209,11 +209,8 @@ describe("autonomy", () => {
 
   it("safeOption swaps an incomplete FIGHT for the next best option", () => {
     const c = testCase({ amount: { cents: 50_000, currency: "USD" } });
-    const analysis = analyzeCase(
-      c,
-      [ev.tracking("delivered", { deliveredTo: { zip: "10001" } })],
-      DEFAULT_POLICY,
-    );
+    const analysis = analyzeCase(c, [ev.tracking("in_transit")], DEFAULT_POLICY);
+    // Pretend the model were optimistic: still no delivery scan, so not deadline-safe.
     const d = chooseOption(c, analysis, DEFAULT_POLICY, 0.6);
     expect(d.option).toBe("FIGHT");
     expect(safeOption(d, analysis)).toBe("ACCEPT");
@@ -230,6 +227,8 @@ describe("LLM adjustment", () => {
     strengths: [],
     weaknesses: [],
     missingEvidence: [],
+    keyFacts: [],
+    riskFlags: [],
     suggestedOption: "FIGHT",
     injectionSuspected: false,
     ...over,
@@ -294,5 +293,85 @@ describe("safeDefault (SLA T-2h)", () => {
       now: NOW,
     });
     expect(out).toMatchObject({ option: "ACCEPT", reason: "DEADLINE" });
+  });
+});
+
+describe("monotonicity (role doc Day 10)", () => {
+  const p = (c: ReturnType<typeof testCase>, items: Parameters<typeof extractSignals>[1]) =>
+    predictWin(c, extractSignals(c, items)).pWin;
+
+  /** Favourable evidence, added one piece at a time, for each reason. */
+  const LADDERS: [string, Parameters<typeof extractSignals>[1]][] = [
+    [
+      "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+      [
+        ev.tracking("delivered", { deliveredTo: null }),
+        ev.tracking("delivered"),
+        ev.tracking("delivered", { signedBy: "J" }),
+        ev.of("order"),
+        ev.of("message_thread", { sellerReplied: true }),
+      ],
+    ],
+    [
+      "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+      [
+        ev.of("listing_snapshot"),
+        ev.of("item_photos"),
+        ev.of("return_policy"),
+        ev.of("message_thread", { sellerReplied: true }),
+      ],
+    ],
+    [
+      "UNAUTHORISED",
+      [
+        ev.tracking(),
+        ev.of("checkout_risk", { avsMatch: true }),
+        ev.of("checkout_risk", { avsMatch: true, ipMatch: true }),
+        ev.of("buyer_history", { priorOrders: 3 }),
+      ],
+    ],
+    [
+      "CREDIT_NOT_PROCESSED",
+      [ev.of("return_policy"), ev.of("refund"), ev.of("message_thread", { sellerReplied: true })],
+    ],
+    [
+      "CANCELED_RECURRING_BILLING",
+      [ev.of("subscription", { chargedAt: "2026-10-01T00:00:00Z", cancelledAt: null })],
+    ],
+  ];
+
+  for (const [reason, ladder] of LADDERS) {
+    it(`${reason}: more favourable evidence never lowers p_win`, () => {
+      const c = testCase({ reason });
+      let last = p(c, []);
+      for (let i = 1; i <= ladder.length; i++) {
+        const next = p(c, ladder.slice(0, i));
+        expect(next, `after ${i} item(s)`).toBeGreaterThanOrEqual(last - 1e-12);
+        last = next;
+      }
+    });
+  }
+
+  it("a higher fee never raises EV(fight); a higher p_win never lowers it", () => {
+    for (const amount of [500, 5000, 50_000])
+      for (let pw = 0; pw <= 1; pw += 0.1) {
+        const at = (fee: number, q = pw) => evFight(amount, q, Economics.parse({ lossFeeCents: fee }));
+        expect(at(4000)).toBeLessThanOrEqual(at(2000));
+        expect(at(2000, Math.min(1, pw + 0.1))).toBeGreaterThanOrEqual(at(2000));
+      }
+  });
+
+  it("buyers accept bigger offers at least as often", () => {
+    for (let r = 0.1; r < 0.9; r += 0.05)
+      expect(pAccept(r + 0.05, "REFUND", O)).toBeGreaterThanOrEqual(pAccept(r, "REFUND", O));
+    expect(pAccept(0.4, "REFUND", O, "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED")).toBeGreaterThan(
+      pAccept(0.4, "REFUND", O, "MERCHANDISE_OR_SERVICE_NOT_RECEIVED"),
+    );
+  });
+
+  it("explains p_win in words", () => {
+    const c = testCase();
+    const lines = decideCase({ c, evidence: [], policy: DEFAULT_POLICY, now: NOW }).analysis.prediction;
+    expect(explainLines(lines)).toContain("No delivery confirmation: −1.20");
   });
 });

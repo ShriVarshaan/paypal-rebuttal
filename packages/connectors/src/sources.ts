@@ -1,6 +1,11 @@
 import { createEasyPostSource, createOfflineEasyPostSource } from "./easypost.js";
 import { createHttpStoreClient, loadFixtureStore, type StoreClient } from "./store/client.js";
-import { createAccountSource, createDownloadLogSource, createMessagesSource } from "./store-sources.js";
+import {
+  createAccountSource,
+  createDownloadLogSource,
+  createMessagesSource,
+  type MessageClassifier,
+} from "./store-sources.js";
 import type { EvidenceSource } from "./types.js";
 
 /**
@@ -19,12 +24,15 @@ export function defaultStore(env: NodeJS.ProcessEnv = process.env): StoreClient 
 }
 
 /** Every connector the `case.gather` job runs. Add new sources here. */
-export function defaultSources(env: NodeJS.ProcessEnv = process.env): EvidenceSource[] {
+export function defaultSources(
+  env: NodeJS.ProcessEnv = process.env,
+  opts: { classifyMessages?: MessageClassifier } = {},
+): EvidenceSource[] {
   const offline = env["SIMULATOR"] === "1" || !env["EASYPOST_API_KEY"];
   const store = defaultStore(env);
   return [
     offline ? createOfflineEasyPostSource() : createEasyPostSource({ apiKey: env["EASYPOST_API_KEY"]! }),
-    createMessagesSource(store),
+    createMessagesSource(store, undefined, opts.classifyMessages),
     createDownloadLogSource(store),
     createAccountSource(store),
   ];

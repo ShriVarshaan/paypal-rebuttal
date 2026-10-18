@@ -112,6 +112,8 @@ describe("TriageResult", () => {
       strengths: [],
       weaknesses: [],
       missingEvidence: [],
+      keyFacts: [],
+      riskFlags: [],
       suggestedOption: "FIGHT",
       injectionSuspected: false,
     };
