@@ -2,14 +2,14 @@
 
 ## Setup
 1. Accept the GitHub collaborator invite.
-2. `git clone https://github.com/ShriVarshaan/rebuttal.git && cd rebuttal`
+2. `git clone https://github.com/ShriVarshaan/paypal-rebuttal.git && cd paypal-rebuttal`
 3. Copy `.env.example` to `.env` and fill in your own PayPal **sandbox** credentials (never commit `.env`).
 4. Open Claude Code in the repo root — it reads `CLAUDE.md` automatically.
 
 ## Branches
 - `main` is always runnable. No direct pushes; everything goes through a PR.
 - Branch names: `<role>/<short-topic>`, e.g. `a/webhooks`, `b/ev-engine`, `c/case-queue`.
-- Parallel work in one checkout: `git worktree add ../rebuttal-<topic> -b <role>/<topic>`.
+- Parallel work in one checkout: `git worktree add ../paypal-rebuttal-<topic> -b <role>/<topic>`.
 
 ## Daily flow
 1. `git pull --rebase origin main` before you start.

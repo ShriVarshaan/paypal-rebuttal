@@ -3,6 +3,7 @@
 AI dispute desk for PayPal sellers: triages each dispute, builds the evidence pack from the seller's own records, and fights, offers a partial refund, or accepts — whichever has the best expected value.
 
 - **Plan:** [docs/plan.md](docs/plan.md) — 3-week, day-by-day, per-person plan
+- **Repo:** https://github.com/ShriVarshaan/paypal-rebuttal
 - **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Team & roles
