@@ -19,3 +19,8 @@ fixtures/private/
 docs/roles/person-a-platform.md
 docs/roles/person-b-intelligence.md
 docs/roles/person-c-product.md
+
+# Generated
+packages/db/src/generated/
+.pgdata/
+.sim/

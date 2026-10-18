@@ -1,0 +1,44 @@
+{
+  "name": "rebuttal",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@rebuttal/api --filter=@rebuttal/worker",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck && tsc -p .",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @rebuttal/db migrate:deploy",
+    "db:generate": "pnpm --filter @rebuttal/db generate",
+    "paypal:ping": "tsx --env-file-if-exists=.env scripts/paypal-ping.ts",
+    "sim:dispute": "tsx --env-file-if-exists=.env scripts/sim-dispute.ts",
+    "sandbox:require-evidence": "tsx --env-file-if-exists=.env scripts/sandbox/require-evidence.ts",
+    "sandbox:adjudicate": "tsx --env-file-if-exists=.env scripts/sandbox/adjudicate.ts",
+    "sandbox:lifecycle": "tsx --env-file-if-exists=.env scripts/sandbox/full-lifecycle.ts",
+    "sandbox:add-tracking": "tsx --env-file-if-exists=.env scripts/sandbox/add-tracking.ts",
+    "db:embedded": "tsx scripts/embedded-db.ts",
+    "e2e:sim": "pnpm --filter @rebuttal/api test:e2e",
+    "record:fixture": "tsx --env-file-if-exists=.env scripts/record-fixture.ts"
+  },
+  "devDependencies": {
+    "@rebuttal/db": "workspace:*",
+    "@rebuttal/paypal": "workspace:*",
+    "embedded-postgres": "17.5.0-beta.15",
+    "@eslint/js": "^10.0.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.0.0",
+    "prettier": "^3.6.0",
+    "tsx": "^4.20.0",
+    "turbo": "^2.5.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.0"
+  }
+}

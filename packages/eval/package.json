@@ -1,0 +1,17 @@
+{
+  "name": "@rebuttal/eval",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Eval harness. Owner: B.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rebuttal/core": "workspace:*"
+  }
+}

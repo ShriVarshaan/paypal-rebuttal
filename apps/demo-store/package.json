@@ -1,0 +1,8 @@
+{
+  "name": "@rebuttal/demo-store",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mock seller store. Owner: C (placeholder).",
+  "type": "module",
+  "scripts": {}
+}
