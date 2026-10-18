@@ -120,6 +120,9 @@ export function createOfflineEasyPostSource(now: () => Date = () => new Date()):
     supports: (c) => trackingNumbers(c).length > 0,
     async gather(c) {
       const shippedAt = c.disputedTransactions[0]?.createdAt ?? now().toISOString();
+      // Simulated deliveries arrive at the order's shipping postal code, so the matrix's
+      // delivered-to-address check behaves as it would for a real delivered parcel.
+      const zip = c.transactionContext?.order?.shipping?.address?.["postal_code"] ?? null;
       return trackingNumbers(c).map((code) => {
         const status = EASYPOST_TEST_CODES[code] ?? "unknown";
         const deliveredAt = new Date(new Date(shippedAt).getTime() + 3 * 24 * 3600 * 1000).toISOString();
@@ -133,7 +136,14 @@ export function createOfflineEasyPostSource(now: () => Date = () => new Date()):
             { status: "pre_transit", message: "Shipping label created", datetime: shippedAt },
             ...(status === "pre_transit"
               ? []
-              : [{ status, message: `Package ${status.replaceAll("_", " ")}`, datetime: deliveredAt }]),
+              : [
+                  {
+                    status,
+                    message: `Package ${status.replaceAll("_", " ")}`,
+                    datetime: deliveredAt,
+                    ...(status === "delivered" && zip ? { tracking_location: { zip } } : {}),
+                  },
+                ]),
           ],
         };
         return trackerToEvidence(tracker, c, now());

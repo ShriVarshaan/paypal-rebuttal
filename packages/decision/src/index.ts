@@ -1,31 +1,63 @@
-// Owned by B (win model, EV, offer optimizer, policy engine). See docs/plan.md §3.
-// Only `safeDefault` exists so far: the SLA scheduler (A) calls it at T-2h.
-import type { Case, DecisionInput, EvidenceItem } from "@rebuttal/core";
+// Decision engine (plan §3). Math chooses the action; the LLM may only nudge p_win.
+import {
+  assignExhibits,
+  DEFAULT_POLICY,
+  type Case,
+  type DecisionInput,
+  type EvidenceItem,
+  type Policy,
+} from "@rebuttal/core";
+import { decideCase } from "./engine.js";
+import { ACCEPT_NOTE, fightNote, offerNote } from "./notes.js";
+import type { DecisionCase } from "./types.js";
+
+export * from "./types.js";
+export * from "./signals.js";
+export * from "./win-model.js";
+export * from "./ev.js";
+export * from "./offer.js";
+export * from "./engine.js";
+export * from "./notes.js";
 
 export interface SafeDefaultInput {
-  case: Pick<Case, "paypalDisputeId" | "reason" | "stage" | "amount">;
-  evidence: Pick<EvidenceItem, "type" | "data">[];
+  case: Pick<Case, "paypalDisputeId" | "reason" | "stage" | "amount"> & Partial<DecisionCase>;
+  evidence: (Pick<EvidenceItem, "type" | "data"> & { source?: string; id?: string; title?: string })[];
+  policy?: Policy;
+  now?: Date;
 }
 
 /**
- * PLACEHOLDER until B's policy engine lands. Fights only when there is delivery proof
- * for a not-received claim; otherwise accepts, which avoids a missed-deadline loss
- * stacking a chargeback fee on top of the refund.
+ * The SLA scheduler's forced decision at T-2h: the engine without the LLM, restricted to
+ * the deadline-safe option (a FIGHT missing required evidence becomes an offer or accept).
  */
 export function safeDefault(input: SafeDefaultInput): DecisionInput {
-  const delivered = input.evidence.some(
-    (e) => e.type === "PROOF_OF_FULFILLMENT" && e.data["status"] === "delivered",
-  );
-  if (input.case.reason === "MERCHANDISE_OR_SERVICE_NOT_RECEIVED" && delivered) {
-    return {
-      option: "FIGHT",
-      note: "Carrier tracking shows the order was delivered to the shipping address on file.",
-      reason: "DEADLINE",
-    };
+  const evidence = input.evidence.map((e) => ({ source: e.source ?? "unknown", ...e }));
+  const policy = input.policy ?? DEFAULT_POLICY;
+  const d = decideCase({
+    c: input.case,
+    evidence,
+    // Force the deadline branch: this only runs when the deadline is upon us.
+    policy: { ...policy, deadlineAutoApproveHours: Number.POSITIVE_INFINITY },
+    now: input.now ?? new Date(),
+  });
+  const base = { reason: "DEADLINE" } as const;
+  switch (d.option) {
+    case "FIGHT":
+      return { ...base, option: "FIGHT", note: fightNote(assignExhibits(evidence)) };
+    case "OFFER":
+      return {
+        ...base,
+        option: "OFFER",
+        offerType: d.offerType ?? "REFUND",
+        ...(d.offerAmountCents != null
+          ? { offerAmount: { cents: d.offerAmountCents, currency: input.case.amount.currency } }
+          : {}),
+        note: offerNote(d.offerType ?? "REFUND", {
+          cents: d.offerAmountCents ?? 0,
+          currency: input.case.amount.currency,
+        }),
+      };
+    default:
+      return { ...base, option: "ACCEPT", note: ACCEPT_NOTE };
   }
-  return {
-    option: "ACCEPT",
-    note: "Accepting the claim to resolve the dispute before the response deadline.",
-    reason: "DEADLINE",
-  };
 }

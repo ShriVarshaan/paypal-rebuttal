@@ -26,8 +26,8 @@ export const Economics = z.object({
   fightMinutes: z.number().nonnegative().default(20),
   offerMinutes: z.number().nonnegative().default(8),
   acceptMinutes: z.number().nonnegative().default(2),
-  /** Share of the sale price recovered when an item comes back (resale value net of handling). */
-  returnRecoveryRatio: z.number().min(0).max(1).default(0.5),
+  /** Share of the price recovered when an item comes back. Returned "not as described" items rarely resell at full price. */
+  returnRecoveryRatio: z.number().min(0).max(1).default(0.3),
   returnShippingCents: z.number().int().nonnegative().default(800),
   /** Cost of a replacement as a share of the price (cost of goods + shipping). */
   replacementCostRatio: z.number().min(0).max(1).default(0.45),
