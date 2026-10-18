@@ -14,3 +14,8 @@ Thumbs.db
 .idea/
 tmp/
 fixtures/private/
+
+# Personal role guides (kept local)
+docs/roles/person-a-platform.md
+docs/roles/person-b-intelligence.md
+docs/roles/person-c-product.md
