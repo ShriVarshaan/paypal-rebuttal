@@ -26,7 +26,7 @@ pnpm db:embedded             # …or without Docker (leave it running in its own
 pnpm db:migrate
 
 pnpm paypal:ping             # token + GET /v1/customer/disputes against the sandbox
-pnpm dev                     # api on :3001 + worker
+pnpm dev                     # web on :3000 + api on :3001 + worker
 pnpm test                    # everything; brings its own throwaway Postgres
 ```
 
@@ -64,6 +64,8 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
      │    case.triage (B) ─▶ Decision ─▶ approve (api) ─▶ action.execute ◀─ pack.ready (C)
      └─── action.execute: Action row first, then provide-evidence / make-offer / accept-claim
           sla.fire: reminders at T-72/24/6h, policy safeDefault at T-2h
+
+ apps/web :3000 ── server-side read routes (Day 4) ──▶ apps/api :3001
 ```
 
 **Safety rails.** Every PayPal write sends `PayPal-Request-Id` = `caseId:decisionId:ACTION` and reuses it on retries. An `Action` row is written before the call. A partial unique index allows only one `SUCCEEDED` action per case and kind. Retries use backoff with jitter and honour `Retry-After` (at most 4 attempts). A 401 refreshes the token once. Evidence must be PDF/PNG/JPG, ≤10MB per file and ≤50MB per submission, checked before upload. The client refuses live PayPal hosts.
@@ -91,4 +93,4 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
 | Webhooks `CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` | [apps/api/src/routes/webhooks.ts](apps/api/src/routes/webhooks.ts) |
 
 ## Status
-Platform (A) and intelligence (B) are built and tested (`pnpm test`: core, decision, connectors, agent, eval, MCP, worker, api, including a simulator end-to-end run with real triage). Waiting on C (web UI, PDF evidence packs, demo store), the team's sign-off on `packages/core` and the Prisma schema, the blind labeling round, and live sandbox credentials. See `CLAUDE.md`.
+Platform (A) and intelligence (B) are built and tested (`pnpm test`: core, decision, connectors, agent, eval, MCP, worker, api, including a simulator end-to-end run with real triage). C's Week 1 web shell and temporary responsive queue are available at `http://127.0.0.1:3000/queue`; API-backed queue/detail data, the demo store, and evidence screenshots are still in progress. PDF evidence packs remain later work. The repository is also waiting on team sign-off for shared `packages/core` and Prisma changes, the blind labeling round, and live sandbox credentials. See `CLAUDE.md`.

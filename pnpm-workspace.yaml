@@ -11,3 +11,6 @@ allowBuilds:
   "@embedded-postgres/linux-arm64": true
   "@embedded-postgres/darwin-arm64": true
   "@embedded-postgres/darwin-x64": true
+
+minimumReleaseAgeExclude:
+  - postcss@8.5.31
