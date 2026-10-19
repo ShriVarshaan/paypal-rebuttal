@@ -8,6 +8,8 @@ connector (orders, listing snapshots) can reuse the same client.
 Set `STORE_API_URL` (and optionally `STORE_API_TOKEN`, sent as a bearer token) to use the API.
 Without it, or with `SIMULATOR=1`, the fixture store is used.
 
+`apps/demo-store` implements this contract against the `store` database schema. Its route tests run against a freshly migrated, seeded throwaway database and compare the HTTP client with the fixture client. When `STORE_API_TOKEN` is unset, tokenless access is allowed only outside production.
+
 All endpoints are `GET`, return JSON, and return **404 when the record doesn't exist** (the
 connector treats that as "no evidence", not as a failure). Response shapes are the zod
 schemas in `src/store/schema.ts`; extra fields are allowed and preserved.

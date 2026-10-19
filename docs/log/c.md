@@ -82,3 +82,47 @@ The first production build exposed that Turbopack did not resolve the shared pac
 ### Next task
 
 Begin Day 2 database reconciliation and demo-store scaffolding. Pause before landing shared core transport/listing contracts or coordinated schema changes until A+B+C approval is confirmed.
+
+## 2026-10-19 — Checkpoint C2 and C3 store API slice
+
+- Status: **C2 passed; C3 incomplete**.
+- Branches: `c/db` (`1997449`) followed by `c/demo-store`.
+- A+B+C approval for the additive core transport/listing-snapshot contracts and coordinated Prisma changes was confirmed before the shared contract and migration landed.
+- Prepared an additive multi-schema Prisma design that keeps existing application models in `public`, adds the default merchant and Day 2 application records, and places seller records in `store`.
+- Preserved the applied migration history, the `Action_one_success_per_case_kind` partial unique index, and the original `Case_state_idx` index. The draft upgrade changes the existing `Case` table in place rather than replacing it.
+- Added an idempotent local-demo seed with five separate application cases, a validated default policy, deterministic decision-engine recommendations, stable timestamps, and no PayPal calls, queued jobs, or Action rows.
+- Added the Fern & Field Goods catalog seed: ten featured products (seven physical, three digital), three legacy products, exact legacy order data, edited, unchanged, and missing listing-history cases.
+- Added the responsive demo-store shell on port 3002 and database-backed private reads for the existing Store API contract. Private APIs use the existing bearer-token convention and refuse tokenless production access.
+
+### Commands and results
+
+- `pnpm --filter @rebuttal/db generate` — passed.
+- `pnpm --filter @rebuttal/db typecheck` — passed.
+- `pnpm --filter @rebuttal/db test` — passed in throwaway PostgreSQL databases (4 tests across 3 files): fresh migration, populated upgrade, idempotent application seed, and store catalog/history seed.
+- `pnpm --filter @rebuttal/demo-store typecheck` — passed.
+- `pnpm --filter @rebuttal/demo-store test` — passed in throwaway PostgreSQL databases (4 tests across 3 files): bearer authorization, database/fixture parity, and HTTP-route/fixture parity for every legacy purchase.
+- `pnpm --filter @rebuttal/demo-store build` — passed without requiring `DATABASE_URL` during the build; six Store API routes and the product/admin pages compiled.
+- `pnpm typecheck` — passed across all 14 workspace packages.
+- `pnpm test` — passed (247 tests across 34 test files, including the new core-contract, database, and demo-store suites).
+- `pnpm lint` — passed after replacing a type-only query helper with Prisma's generated payload type.
+- `pnpm build` — passed; the web and demo-store production builds completed together.
+- `git diff --check` — passed.
+- `pnpm db:migrate` — passed against the persistent local database; `20261020010000_product_foundation` applied.
+- First `pnpm db:seed` — added 5 cases, 11 evidence items, 4 decisions, 13 products, and 4 orders; created the validated policy.
+- Second `pnpm db:seed` — added zero records and preserved the existing policy.
+- Runtime checks — API health, web queue, demo product shell, and the database-backed `INV-1001` order lookup all returned HTTP 200.
+
+### Browser evidence
+
+- Verified the product shell, read-only product editor, and honest empty order-admin state at desktop width and 390px mobile width.
+- Navigation between the product and admin routes worked without document overflow.
+- Browser console contained no errors or warnings during the shell checks.
+- The live database-backed order lookup returned the seeded legacy identifiers, amount, item, and checkout checks without exposing credentials.
+
+### Remaining C3 work
+
+- C3 remains incomplete: `@rebuttal/storefront`, the approved listing-snapshot schema, current/historical shared rendering, transactional publication/editing, product/snapshot/shipment reads, bundled assets, and screenshot evidence have not been implemented.
+
+### Next task
+
+Commit the verified demo-store scaffold/API slice, then create `c/store-snapshots` and implement the shared versioned listing renderer and remaining Day 3 routes.

@@ -5,7 +5,9 @@
   "description": "EvidenceSource implementations (EasyPost, storefront, messages, logs).",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./store/client": "./src/store/client.ts",
+    "./store/schema": "./src/store/schema.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

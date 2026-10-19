@@ -50,3 +50,13 @@ Verified patterns for the product workspace. Keep this file aligned with `DESIGN
 - **1440px desktop:** full grid columns and persistent navigation.
 - **820px tablet:** persistent navigation and horizontally scrollable grid without page overflow.
 - **390px mobile:** drawer navigation, scrollable filter row, stacked case cards, and no document-level horizontal overflow.
+
+## Demo store
+
+- **Identity:** fictional `Fern & Field Goods` storefront, clearly marked as synthetic in the utility bar and footer. Warm canvas, white paper surfaces, clay attention, and sage metadata distinguish it from the operations workspace without creating a second visual language.
+- **Store header:** brand and context on the left; three 44px bordered route controls on the right. Controls wrap on narrow screens and retain their text labels.
+- **Product shell:** two-column product media/details composition above 1024px; single column below. Product photography is a labeled placeholder only until real synthetic assets arrive.
+- **Admin shell:** one editorial heading, one honest implementation notice, then the working surface. Disabled editor controls visually and semantically communicate that persistence is not connected yet.
+- **Empty orders:** bordered record surface with table headings on desktop and a centered explanation. Never insert fallback orders after a database or API failure.
+- **Historical evidence:** storefront and snapshot routes must share the same renderer; evidence-specific metadata sits outside the listing itself so screenshots remain faithful to what the buyer saw.
+- **Verified:** product, product-editor, and order-admin navigation; disabled edit controls; desktop build; 390px layout with no document overflow; no browser warnings.

@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --store-canvas: #f4f0e8;
+  --store-surface: #fffdf9;
+  --store-ink: #25241f;
+  --store-muted: #716f66;
+  --store-border: #d8d2c7;
+  --store-clay: #9a5d43;
+  --store-clay-soft: #efe1d8;
+  --store-sage: #4f675a;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--store-canvas);
+  --color-surface: var(--store-surface);
+  --color-ink: var(--store-ink);
+  --color-muted: var(--store-muted);
+  --color-border: var(--store-border);
+  --color-clay: var(--store-clay);
+  --color-clay-soft: var(--store-clay-soft);
+  --color-sage: var(--store-sage);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--store-canvas);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--store-canvas);
+  color: var(--store-ink);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+a,
+button,
+input,
+textarea {
+  outline-color: var(--store-clay);
+}
+
+::selection {
+  background: var(--store-clay-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
