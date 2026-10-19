@@ -9,6 +9,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["public", "store"]
 }
 
 enum CaseState {
@@ -24,12 +25,16 @@ enum CaseState {
   LOST
   REFUNDED
   APPEAL_DRAFTED
+
+  @@schema("public")
 }
 
 enum DecisionOption {
   FIGHT
   OFFER
   ACCEPT
+
+  @@schema("public")
 }
 
 enum DecisionStatus {
@@ -39,6 +44,8 @@ enum DecisionStatus {
   REJECTED
   EXECUTED
   FAILED
+
+  @@schema("public")
 }
 
 enum ActionKind {
@@ -50,6 +57,8 @@ enum ActionKind {
   APPEAL
   PROVIDE_SUPPORTING_INFO
   REFUND
+
+  @@schema("public")
 }
 
 enum ActionStatus {
@@ -57,12 +66,16 @@ enum ActionStatus {
   IN_FLIGHT
   SUCCEEDED
   FAILED
+
+  @@schema("public")
 }
 
 enum PackStatus {
   PENDING
   READY
   FAILED
+
+  @@schema("public")
 }
 
 enum SlaKind {
@@ -70,16 +83,35 @@ enum SlaKind {
   REMIND_24H
   REMIND_6H
   FORCE_DECISION
+
+  @@schema("public")
 }
 
 enum SlaStatus {
   SCHEDULED
   CANCELLED
   FIRED
+
+  @@schema("public")
+}
+
+model Merchant {
+  id              String   @id @default("default")
+  name            String
+  defaultCurrency String   @default("USD")
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  cases    Case[]
+  policies Policy[]
+
+  @@schema("public")
 }
 
 model Case {
   id                     String    @id @default(cuid())
+  merchantId             String    @default("default")
+  merchant               Merchant  @relation(fields: [merchantId], references: [id])
   paypalDisputeId        String    @unique
   reason                 String
   status                 String
@@ -113,9 +145,12 @@ model Case {
   notifications Notification[]
   slaJobs       SlaJob[]
   agentRuns     AgentRun[]
+  caseMessages  Message[]
 
   @@index([state])
+  @@index([merchantId, state])
   @@index([sellerResponseDueAt])
+  @@schema("public")
 }
 
 model CaseEvent {
@@ -127,6 +162,7 @@ model CaseEvent {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([caseId, createdAt])
+  @@schema("public")
 }
 
 model WebhookEvent {
@@ -138,6 +174,8 @@ model WebhookEvent {
   payload       Json
   receivedAt    DateTime  @default(now()) @db.Timestamptz(3)
   processedAt   DateTime? @db.Timestamptz(3)
+
+  @@schema("public")
 }
 
 model EvidenceItem {
@@ -154,6 +192,7 @@ model EvidenceItem {
   createdAt  DateTime @default(now()) @db.Timestamptz(3)
 
   @@unique([caseId, source, dedupeKey])
+  @@schema("public")
 }
 
 model EvidencePack {
@@ -170,6 +209,7 @@ model EvidencePack {
   updatedAt  DateTime   @updatedAt @db.Timestamptz(3)
 
   @@index([decisionId])
+  @@schema("public")
 }
 
 model Decision {
@@ -202,6 +242,7 @@ model Decision {
   packs   EvidencePack[]
 
   @@index([caseId])
+  @@schema("public")
 }
 
 model Action {
@@ -226,6 +267,7 @@ model Action {
   // Plus a partial unique index added in the init migration:
   // one SUCCEEDED action per (caseId, kind), except SEND_MESSAGE.
   @@index([caseId, kind])
+  @@schema("public")
 }
 
 model Notification {
@@ -239,6 +281,7 @@ model Notification {
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([readAt, createdAt])
+  @@schema("public")
 }
 
 model SlaJob {
@@ -254,6 +297,7 @@ model SlaJob {
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([caseId, status])
+  @@schema("public")
 }
 
 /// One Claude call (B): tokens, cost and latency for the cost dashboard (role doc Day 8/15).
@@ -274,14 +318,20 @@ model AgentRun {
 
   @@index([agent, createdAt])
   @@index([caseId])
+  @@schema("public")
 }
 
 /// Merchant policy (Policy in @rebuttal/core): autonomy rules and EV assumptions. One row, id "default".
 model Policy {
-  id        String   @id @default("default")
-  config    Json
-  updatedBy String?
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  id         String   @id @default("default")
+  merchantId String   @default("default")
+  merchant   Merchant @relation(fields: [merchantId], references: [id])
+  config     Json
+  updatedBy  String?
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([merchantId])
+  @@schema("public")
 }
 
 /// Small key/value store for sync state, e.g. the last successful poll time.
@@ -289,4 +339,253 @@ model SyncCursor {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@schema("public")
+}
+
+/// Normalized message groundwork. Case.messages remains authoritative during Week 1.
+model Message {
+  id        String    @id @default(cuid())
+  caseId    String
+  case      Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  source    String
+  dedupeKey String
+  sender    String
+  channel   String
+  text      String
+  sentAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@unique([caseId, source, dedupeKey])
+  @@index([caseId, sentAt])
+  @@schema("public")
+}
+
+/// Schema groundwork for later evaluation-report ingestion.
+model EvalRun {
+  id          String    @id @default(cuid())
+  datasetId   String
+  strategyId  String
+  modelId     String?
+  startedAt   DateTime  @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  results     Json
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([datasetId, strategyId, createdAt])
+  @@schema("public")
+}
+
+model StoreProduct {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  sku       String   @unique
+  active    Boolean  @default(true)
+  featured  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  snapshots  ListingSnapshot[]
+  orderItems StoreOrderItem[]
+
+  @@map("Product")
+  @@schema("store")
+}
+
+model ListingSnapshot {
+  id              String       @id @default(cuid())
+  productId       String
+  product         StoreProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  priceCents      Int
+  currency        String
+  attributes      Json
+  assets          Json
+  capturedAt      DateTime     @db.Timestamptz(3)
+  revision        Int
+  rendererVersion String
+  createdAt       DateTime     @default(now()) @db.Timestamptz(3)
+
+  orderItems StoreOrderItem[]
+
+  @@unique([productId, revision])
+  @@index([productId, capturedAt])
+  @@schema("store")
+}
+
+model StoreCustomer {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  name          String?
+  priorOrders   Int      @default(0)
+  priorDisputes Int      @default(0)
+  knownIps      Json
+  knownDevices  Json
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  orders StoreOrder[]
+
+  @@map("Customer")
+  @@schema("store")
+}
+
+model StoreOrder {
+  id               String         @id @default(cuid())
+  customerId       String?
+  customer         StoreCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  invoiceNumber    String?        @unique
+  paypalCaptureId  String?        @unique
+  paypalOrderId    String?        @unique
+  status           String
+  placedAt         DateTime       @db.Timestamptz(3)
+  totalCents       Int
+  currency         String
+  digital          Boolean        @default(false)
+  checkoutIp       String?
+  checkoutDeviceId String?
+  avs              String?
+  cvv              String?
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+
+  items          StoreOrderItem[]
+  shipments      StoreShipment[]
+  messageThreads StoreMessageThread[]
+  downloadEvents StoreDownloadEvent[]
+  refunds        StoreRefund[]
+  subscription   StoreSubscription?
+
+  @@index([customerId, placedAt])
+  @@map("Order")
+  @@schema("store")
+}
+
+model StoreOrderItem {
+  id                String           @id @default(cuid())
+  orderId           String
+  order             StoreOrder       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           StoreProduct     @relation(fields: [productId], references: [id])
+  listingSnapshotId String?
+  listingSnapshot   ListingSnapshot? @relation(fields: [listingSnapshotId], references: [id])
+  name              String
+  sku               String
+  quantity          Int
+  unitPriceCents    Int
+  currency          String
+  digital           Boolean          @default(false)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+
+  downloadEvents StoreDownloadEvent[]
+
+  @@index([orderId])
+  @@index([productId, listingSnapshotId])
+  @@map("OrderItem")
+  @@schema("store")
+}
+
+model StoreShipment {
+  id             String     @id @default(cuid())
+  orderId        String
+  order          StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier        String
+  trackingNumber String
+  status         String
+  address        Json
+  history        Json
+  shippedAt      DateTime?  @db.Timestamptz(3)
+  deliveredAt    DateTime?  @db.Timestamptz(3)
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@unique([carrier, trackingNumber])
+  @@index([orderId])
+  @@map("Shipment")
+  @@schema("store")
+}
+
+model StoreMessageThread {
+  id        String     @id @default(cuid())
+  orderId   String
+  order     StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  channel   String
+  subject   String?
+  createdAt DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(3)
+
+  messages StoreMessage[]
+
+  @@index([orderId, createdAt])
+  @@map("MessageThread")
+  @@schema("store")
+}
+
+model StoreMessage {
+  id        String             @id @default(cuid())
+  threadId  String
+  thread    StoreMessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  dedupeKey String
+  sender    String
+  text      String
+  sentAt    DateTime           @db.Timestamptz(3)
+  createdAt DateTime           @default(now()) @db.Timestamptz(3)
+
+  @@unique([threadId, dedupeKey])
+  @@index([threadId, sentAt])
+  @@map("Message")
+  @@schema("store")
+}
+
+model StoreDownloadEvent {
+  id          String          @id @default(cuid())
+  orderId     String
+  order       StoreOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  orderItem   StoreOrderItem? @relation(fields: [orderItemId], references: [id], onDelete: SetNull)
+  action      String
+  ip          String?
+  deviceId    String?
+  occurredAt  DateTime        @db.Timestamptz(3)
+  metadata    Json?
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@index([orderId, occurredAt])
+  @@map("DownloadEvent")
+  @@schema("store")
+}
+
+model StoreRefund {
+  id             String     @id @default(cuid())
+  orderId        String
+  order          StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paypalRefundId String?    @unique
+  amountCents    Int
+  currency       String
+  status         String
+  refundedAt     DateTime   @db.Timestamptz(3)
+  raw            Json?
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+
+  @@index([orderId, refundedAt])
+  @@map("Refund")
+  @@schema("store")
+}
+
+model StoreSubscription {
+  id          String     @id @default(cuid())
+  orderId     String     @unique
+  order       StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      String
+  startedAt   DateTime   @db.Timestamptz(3)
+  chargedAt   DateTime?  @db.Timestamptz(3)
+  cancelledAt DateTime?  @db.Timestamptz(3)
+  endedAt     DateTime?  @db.Timestamptz(3)
+  termsUrl    String?
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(3)
+
+  @@map("Subscription")
+  @@schema("store")
 }

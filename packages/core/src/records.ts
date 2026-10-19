@@ -8,7 +8,7 @@ import { OfferType } from "./paypal-enums.js";
  * Stored records as the api returns them (Prisma rows, dates as ISO strings). The web app
  * (C) parses responses with these; JSON columns are typed via the analysis schemas.
  */
-const Iso = z.union([z.string(), z.date().transform((d) => d.toISOString())]);
+export const IsoDateTime = z.union([z.string(), z.date().transform((d) => d.toISOString())]);
 
 export const DecisionRecord = z.object({
   id: z.string(),
@@ -31,9 +31,9 @@ export const DecisionRecord = z.object({
   analysis: DecisionAnalysis.nullable(),
   narrative: Narrative.nullable(),
   approvedBy: z.string().nullable(),
-  approvedAt: Iso.nullable(),
-  createdAt: Iso,
-  updatedAt: Iso,
+  approvedAt: IsoDateTime.nullable(),
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
 });
 export type DecisionRecord = z.infer<typeof DecisionRecord>;
 
@@ -49,8 +49,8 @@ export const ActionRecord = z.object({
   request: z.unknown().nullable(),
   response: z.unknown().nullable(),
   error: z.unknown().nullable(),
-  createdAt: Iso,
-  completedAt: Iso.nullable(),
+  createdAt: IsoDateTime,
+  completedAt: IsoDateTime.nullable(),
 });
 export type ActionRecord = z.infer<typeof ActionRecord>;
 
@@ -60,6 +60,6 @@ export const CaseEventRecord = z.object({
   /** A CaseEventType; kept as a string so older rows with retired types still parse. */
   type: z.string(),
   payload: z.unknown(),
-  createdAt: Iso,
+  createdAt: IsoDateTime,
 });
 export type CaseEventRecord = z.infer<typeof CaseEventRecord>;

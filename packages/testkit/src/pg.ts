@@ -71,20 +71,29 @@ export async function withClient<T>(url: string, fn: (c: pg.Client) => Promise<T
   }
 }
 
-/** Creates a fresh database with every migration applied. */
-export async function createTestDatabase(adminUrl: string): Promise<{ url: string; drop(): Promise<void> }> {
+/** Creates a fresh empty database. Callers own applying any desired migration subset. */
+export async function createEmptyTestDatabase(
+  adminUrl: string,
+): Promise<{ url: string; drop(): Promise<void> }> {
   const name = `t_${randomBytes(6).toString("hex")}`;
   await withClient(adminUrl, (c) =>
     c.query(`CREATE DATABASE ${name} ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`),
   );
   const url = new URL(adminUrl);
   url.pathname = `/${name}`;
-  await withClient(url.toString(), async (c) => {
-    for (const sql of migrationSql()) await c.query(sql);
-  });
   return {
     url: url.toString(),
     drop: () =>
       withClient(adminUrl, (c) => c.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`)).then(() => {}),
   };
+}
+
+/** Creates a fresh database with every migration applied. */
+export async function createTestDatabase(adminUrl: string): Promise<{ url: string; drop(): Promise<void> }> {
+  const database = await createEmptyTestDatabase(adminUrl);
+  const url = database.url;
+  await withClient(url.toString(), async (c) => {
+    for (const sql of migrationSql()) await c.query(sql);
+  });
+  return database;
 }

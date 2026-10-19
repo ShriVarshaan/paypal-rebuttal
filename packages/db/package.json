@@ -5,7 +5,8 @@
   "description": "Prisma schema and client shared by api and worker.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./seed": "./src/seed.ts"
   },
   "scripts": {
     "postinstall": "prisma generate",
@@ -16,10 +17,13 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@rebuttal/core": "workspace:*",
+    "@rebuttal/decision": "workspace:*",
     "@prisma/client": "7.10.1",
     "@prisma/adapter-pg": "7.10.1"
   },
   "devDependencies": {
+    "@rebuttal/testkit": "workspace:*",
     "prisma": "7.10.1"
   }
 }
