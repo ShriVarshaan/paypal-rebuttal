@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 const nav = [
   { href: "/p/speckled-serving-bowl", label: "Storefront", icon: BackpackIcon },
-  { href: "/admin/products/demo-product-bowl/edit", label: "Product editor", icon: Pencil2Icon },
+  { href: "/admin/products/product-speckled-bowl/edit", label: "Product editor", icon: Pencil2Icon },
   { href: "/admin/orders", label: "Orders", icon: DashboardIcon },
 ] as const;
 

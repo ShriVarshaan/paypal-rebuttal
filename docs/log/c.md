@@ -126,3 +126,110 @@ Begin Day 2 database reconciliation and demo-store scaffolding. Pause before lan
 ### Next task
 
 Commit the verified demo-store scaffold/API slice, then create `c/store-snapshots` and implement the shared versioned listing renderer and remaining Day 3 routes.
+
+## 2026-10-19 — Checkpoint C3: immutable storefront
+
+- Status: **implementation complete; final full-suite and browser verification pending**.
+- Branch: `c/store-snapshots`.
+- Added `@rebuttal/storefront`, a Next/Prisma/connector-independent listing component with shared CSS, renderer version 1, and a Node-only static HTML entry point.
+- Bundled the Geist variable font plus fourteen immutable `catalog/v1` WebP paths for twelve seeded listings and two later revisions. Source imagery was generated for the fictional catalog only.
+- Connected current and historical product pages to the same renderer. Historical rendering receives only `ListingSnapshot`, preventing current product fields from entering archived output.
+- Added serializable create/publish transactions, strict as-of lookup, product/snapshot/shipment reads, public historical pages, and a working seller editor that always publishes a new revision.
+- Extended fixture and HTTP clients together for products, historical snapshots, and shipments. Contract tests compare equivalent fixture and database-backed route data.
+- Verified in focused tests that timestamp ties choose the higher revision, a later edit does not alter an earlier snapshot, and an order item's pinned snapshot reference remains unchanged.
+
+### Matrix wording review
+
+- **Found:** “Ready — a seller record directly supports this requirement.” Use for purchase-time listing copy, matching delivery events, or verified access records.
+- **Weak:** “Needs context — a related record exists, but it does not fully prove the requirement.” State the limitation beside the record; do not upgrade it to found.
+- **Missing:** “Not found — no seller record currently supports this requirement.” Pair with the next concrete seller action when one exists.
+- These are presentation labels only. No evidence weights, win-model inputs, thresholds, or decision policy were changed.
+
+## 2026-10-20 — Checkpoint C4: connected queue and case API
+
+- Status: **passed**.
+- Added additive queue/detail serializers, server-side filters and sorting, pagination totals,
+  merchant metadata, deterministic reject/override compatibility stubs, safe evidence-file
+  access, and web proxy routes. The queue now uses TanStack Query against the API, polls every
+  ten seconds, preserves stale rows on refresh errors, and renders equivalent mobile cards.
+- Added the shared clock/deadline behavior, eight server-backed columns, quick filters, URL state,
+  keyboard row activation, and no-sample-data fallback behavior.
+
+### Commands and results
+
+- Direct TypeScript checks for core, connectors, API, web, and demo-store — passed.
+- API and web route/type contracts were verified through the later C7 HTTP harness.
+- Existing approve/PATCH paths remain registered; Week 1 reject/override stubs return 501 and
+  do not mutate records.
+
+### Next task
+
+Complete the three-column case detail and evidence checklist, then verify safe exhibit links.
+
+## 2026-10-20 — Checkpoint C5: case detail and evidence access
+
+- Status: **passed**.
+- Added the additive `CaseDetail` transport projection with transaction context, stable merged
+  timeline, matrix-backed found/weak/missing checklist states, exhibit labels, safe action
+  summaries, structured-only preview messaging, and a labeled Week 2 decision placeholder.
+- Added token-protected, case-scoped evidence-file serving with storage-root containment and a
+  server-side web proxy that never exposes filesystem paths.
+- The C7 browser run exercised the detail route and opened its evidence-backed view.
+
+### Next task
+
+Register the storefront evidence source and finish deterministic screenshot capture.
+
+## 2026-10-20 — Checkpoint C6: storefront evidence and capture
+
+- Status: **passed**.
+- Registered the storefront source with exact identifier resolution, conflict diagnostics,
+  constrained amount/time fallback, pinned/as-of purchase snapshots, shipment facts, immutable
+  listing diffs, stable dedupe keys, and visible capture failure metadata.
+- Added fixture/HTTP source selection (`STORE_SOURCE`), trusted historical-page/assets settings,
+  Playwright capture with atomic writes, bounded file size, retry reuse, light/reduced-motion
+  capture settings, and explicit browser-install/test commands.
+- Unit coverage passed for conflict handling, historical/diff evidence, dedupe stability, capture
+  reuse, and a real Chromium offline PNG capture.
+
+### Next task
+
+Run the isolated real HTTP/worker/browser Week 1 harness and record the handoff.
+
+## 2026-10-20 — Checkpoint C7: Week 1 integration
+
+- Status: **passed in simulator mode**.
+- Harness: `scripts/e2e-week1.ts`; report: `docs/week1-integration.md`.
+- The run used real migrations, pg-boss, Fastify HTTP, demo-store HTTP/Next, web Next, fresh
+  changed-listing and digital simulator webhooks, and Playwright queue/detail checks.
+- Replay produced one webhook row, the changed listing stored seven evidence items including the
+  revision-1 screenshot and revision-1→revision-2 diff, the digital case stored access evidence,
+  and the target case had zero PayPal `Action` rows.
+- Captured ignored artifacts: `storage/test-output/week1/queue.png`,
+  `storage/test-output/week1/case-detail.png`, and `summary.json`.
+
+### Remaining failures and approvals
+
+- No sandbox run was attempted; the simulator run is the permitted Week 1 fallback. Shared core
+  contract approval was recorded before the additive transport/listing/schema changes.
+- Next development webpack cache and AG Grid inferred-formatter warnings were non-blocking.
+
+### Next task
+
+Stop at the Week 1 milestone. Week 2 begins with PDF evidence packs and the decision/filing UI.
+
+## 2026-10-20 — Final Week 1 verification
+
+- Status: **passed with one environment-limited command**.
+- Fixed the Next production prerender boundary for URL-backed queue filters; direct production
+  builds for `apps/web` and `apps/demo-store` now pass.
+- Direct typechecks for the root, core, connectors, API, web, and demo-store — passed.
+- `node_modules/.bin/eslint .` and `git diff --check` — passed.
+- Storefront unit tests, connector/capture tests, and the real Chromium UI test runner — passed.
+- A final `pnpm test` attempt was stopped by pnpm's non-interactive workspace module-removal guard
+  before tests ran; the focused suites and the real C7 harness remain the authoritative results for
+  this desktop environment. No generated store, evidence, or preload files were left behind.
+
+### Next task
+
+Hand off the completed Week 1 milestone; do not start Week 2 implementation.

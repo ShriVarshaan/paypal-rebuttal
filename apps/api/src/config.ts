@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 export interface ApiConfig {
   port: number;
   host: string;
@@ -9,6 +11,8 @@ export interface ApiConfig {
   /** Dev/simulator only: accept webhooks without asking PayPal to verify them. */
   skipWebhookVerify: boolean;
   production: boolean;
+  /** Absolute root under which browser evidence files may be served. */
+  evidenceStorageDir: string;
 }
 
 export function apiConfigFromEnv(env: NodeJS.ProcessEnv = process.env): ApiConfig {
@@ -28,5 +32,6 @@ export function apiConfigFromEnv(env: NodeJS.ProcessEnv = process.env): ApiConfi
     webhookId: env["PAYPAL_WEBHOOK_ID"] || undefined,
     skipWebhookVerify,
     production,
+    evidenceStorageDir: resolve(env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
   };
 }

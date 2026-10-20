@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ListingSnapshot, StoreProductListing } from "@rebuttal/core";
 
 /**
  * The seller's own records, as the demo store (C, apps/demo-store) serves them. These
@@ -15,7 +16,17 @@ export const StoreOrder = z.looseObject({
   totalCents: z.number().int().nullish(),
   currency: z.string().nullish(),
   items: z
-    .array(z.looseObject({ name: z.string(), sku: z.string().nullish(), digital: z.boolean().nullish() }))
+    .array(
+      z.looseObject({
+        name: z.string(),
+        sku: z.string().nullish(),
+        digital: z.boolean().nullish(),
+        productId: z.string().nullish(),
+        listingSnapshotId: z.string().nullish(),
+        quantity: z.number().int().positive().nullish(),
+        unitPriceCents: z.number().int().nonnegative().nullish(),
+      }),
+    )
     .default([]),
   checkout: z
     .looseObject({
@@ -72,6 +83,24 @@ export const StoreSubscription = z.looseObject({
 });
 export type StoreSubscription = z.infer<typeof StoreSubscription>;
 
+export const StoreShipment = z.looseObject({
+  id: z.string(),
+  orderId: z.string(),
+  carrier: z.string(),
+  trackingNumber: z.string(),
+  status: z.string(),
+  address: z.record(z.string(), z.unknown()),
+  history: z.array(z.record(z.string(), z.unknown())),
+  shippedAt: z.string().nullish(),
+  deliveredAt: z.string().nullish(),
+});
+export type StoreShipment = z.infer<typeof StoreShipment>;
+
+export const StoreFixtureProduct = StoreProductListing.omit({ currentSnapshot: true }).extend({
+  snapshots: z.array(ListingSnapshot).min(1),
+});
+export type StoreFixtureProduct = z.infer<typeof StoreFixtureProduct>;
+
 /** fixtures/store/store.json: the same records, keyed by order id where they belong to one. */
 export const StoreFixture = z.object({
   orders: z.array(StoreOrder).default([]),
@@ -80,5 +109,7 @@ export const StoreFixture = z.object({
   customers: z.array(StoreCustomer).default([]),
   refunds: z.record(z.string(), z.array(StoreRefund)).default({}),
   subscriptions: z.record(z.string(), StoreSubscription).default({}),
+  shipments: z.record(z.string(), z.array(StoreShipment)).default({}),
+  products: z.array(StoreFixtureProduct).default([]),
 });
 export type StoreFixture = z.infer<typeof StoreFixture>;

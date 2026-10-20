@@ -4,12 +4,14 @@ import {
   StoreMessage,
   StoreOrder,
   StoreRefund,
+  StoreShipment,
   StoreSubscription,
   type AccessEvent as AccessEventValue,
   type StoreCustomer as StoreCustomerValue,
   type StoreMessage as StoreMessageValue,
   type StoreOrder as StoreOrderValue,
   type StoreRefund as StoreRefundValue,
+  type StoreShipment as StoreShipmentValue,
   type StoreSubscription as StoreSubscriptionValue,
 } from "@rebuttal/connectors/store/schema";
 import type { Db, Prisma } from "@rebuttal/db";
@@ -41,7 +43,15 @@ export function createStoreRecords(db: Db) {
       digital: row.digital,
       totalCents: row.totalCents,
       currency: row.currency,
-      items: row.items.map((item) => ({ name: item.name, sku: item.sku, digital: item.digital })),
+      items: row.items.map((item) => ({
+        name: item.name,
+        sku: item.sku,
+        digital: item.digital,
+        productId: item.productId,
+        listingSnapshotId: item.listingSnapshotId,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+      })),
       checkout: {
         ip: row.checkoutIp,
         deviceId: row.checkoutDeviceId,
@@ -61,6 +71,20 @@ export function createStoreRecords(db: Db) {
       if (!terms.length) return null;
       const row = await db.storeOrder.findFirst({ where: { OR: terms }, include: orderShape });
       return toOrder(row);
+    },
+
+    async searchOrders(input: { totalCents: number; currency: string; placedAt: string; sku?: string }) {
+      const rows = await db.storeOrder.findMany({ include: orderShape });
+      return rows
+        .filter(
+          (row) =>
+            row.totalCents === input.totalCents &&
+            row.currency.toUpperCase() === input.currency.toUpperCase() &&
+            Math.abs(row.placedAt.getTime() - Date.parse(input.placedAt)) <= 5 * 60_000 &&
+            (!input.sku || row.items.some((item) => item.sku === input.sku)),
+        )
+        .map(toOrder)
+        .filter((row): row is StoreOrderValue => row !== null);
     },
 
     async orderExists(id: string): Promise<boolean> {
@@ -114,6 +138,26 @@ export function createStoreRecords(db: Db) {
       });
       return rows.map((row) =>
         StoreRefund.parse({ id: row.id, amountCents: row.amountCents, refundedAt: iso(row.refundedAt) }),
+      );
+    },
+
+    async shipments(id: string): Promise<StoreShipmentValue[]> {
+      const rows = await db.storeShipment.findMany({
+        where: { orderId: id },
+        orderBy: [{ shippedAt: "asc" }, { id: "asc" }],
+      });
+      return rows.map((row) =>
+        StoreShipment.parse({
+          id: row.id,
+          orderId: row.orderId,
+          carrier: row.carrier,
+          trackingNumber: row.trackingNumber,
+          status: row.status,
+          address: row.address,
+          history: row.history,
+          shippedAt: row.shippedAt ? iso(row.shippedAt) : null,
+          deliveredAt: row.deliveredAt ? iso(row.deliveredAt) : null,
+        }),
       );
     },
 

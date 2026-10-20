@@ -55,8 +55,18 @@ Verified patterns for the product workspace. Keep this file aligned with `DESIGN
 
 - **Identity:** fictional `Fern & Field Goods` storefront, clearly marked as synthetic in the utility bar and footer. Warm canvas, white paper surfaces, clay attention, and sage metadata distinguish it from the operations workspace without creating a second visual language.
 - **Store header:** brand and context on the left; three 44px bordered route controls on the right. Controls wrap on narrow screens and retain their text labels.
-- **Product shell:** two-column product media/details composition above 1024px; single column below. Product photography is a labeled placeholder only until real synthetic assets arrive.
-- **Admin shell:** one editorial heading, one honest implementation notice, then the working surface. Disabled editor controls visually and semantically communicate that persistence is not connected yet.
+- **Listing renderer:** `@rebuttal/storefront` owns one responsive composition for current and historical pages: square immutable media, serif display title, compact price, restrained metadata, and a visible renderer/capture stamp. It collapses to one column below 760px and has a print layout for later evidence capture.
+- **Catalog assets:** synthetic product photography and Geist are bundled under versioned `catalog/v1` paths. Published snapshots keep their exact asset paths; replacing an image requires a new filename and listing revision.
+- **Historical state:** archived pages use a clay-outlined revision badge and a brief evidence note. They receive a `ListingSnapshot` only; never pass current product metadata into the renderer.
+- **Admin editor:** active controls use the same 6px border language and 44px minimum height. Saving publishes a new immutable revision, returns to the editor, and shows a factual success notice.
 - **Empty orders:** bordered record surface with table headings on desktop and a centered explanation. Never insert fallback orders after a database or API failure.
 - **Historical evidence:** storefront and snapshot routes must share the same renderer; evidence-specific metadata sits outside the listing itself so screenshots remain faithful to what the buyer saw.
-- **Verified:** product, product-editor, and order-admin navigation; disabled edit controls; desktop build; 390px layout with no document overflow; no browser warnings.
+- **Verified:** Day 2 product, product-editor, and order-admin navigation at 1440px and 390px. Day 3 renderer breakpoints, assets, publishing feedback, and browser behavior require a fresh visual pass after runtime verification.
+
+## Case detail and evidence
+
+- **Desktop detail:** three equal-purpose columns at `xl`: dispute/transaction context, a stable chronological timeline, and the matrix-backed checklist/preview. Below `xl`, columns stack without hiding evidence.
+- **Timeline:** case events and store/PayPal messages share one mono timestamp treatment; undated messages are explicitly labeled and rendered after dated entries. Duplicate message text is shown once.
+- **Checklist:** found, weak, and missing are semantic badges with text labels; score is the core `assessCompleteness` result, never a frontend approximation. Required/strong/nice tiers and collection hints remain visible beside each item.
+- **Evidence links:** exhibit labels are the current `assignExhibits` mapping. A linked file goes through the server proxy; structured-only evidence says so explicitly instead of presenting a broken preview.
+- **Verified:** C7 browser harness loaded the queue and detail pages from fresh webhook-created data, including the historical listing evidence state.

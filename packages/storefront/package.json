@@ -1,0 +1,24 @@
+{
+  "name": "@rebuttal/storefront",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Versioned Fern & Field listing renderer shared by live pages and evidence capture.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@rebuttal/core": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  }
+}

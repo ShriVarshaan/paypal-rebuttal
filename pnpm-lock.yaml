@@ -169,12 +169,21 @@ importers:
       '@eslint/js':
         specifier: ^10.0.0
         version: 10.0.1(eslint@10.13.0(jiti@2.7.0))
+      '@rebuttal/connectors':
+        specifier: workspace:*
+        version: link:packages/connectors
       '@rebuttal/db':
         specifier: workspace:*
         version: link:packages/db
       '@rebuttal/paypal':
         specifier: workspace:*
         version: link:packages/paypal
+      '@rebuttal/testkit':
+        specifier: workspace:*
+        version: link:packages/testkit
+      '@rebuttal/worker':
+        specifier: workspace:*
+        version: link:apps/worker
       '@types/node':
         specifier: ^24.0.0
         version: 24.19.2
@@ -184,6 +193,9 @@ importers:
       eslint:
         specifier: ^10.0.0
         version: 10.13.0(jiti@2.7.0)
+      pg-boss:
+        specifier: ^12.0.0
+        version: 12.38.0(@opentelemetry/api@1.9.0)
       prettier:
         specifier: ^3.6.0
         version: 3.9.10
@@ -257,9 +269,15 @@ importers:
       '@rebuttal/connectors':
         specifier: workspace:*
         version: link:../../packages/connectors
+      '@rebuttal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@rebuttal/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@rebuttal/storefront':
+        specifier: workspace:*
+        version: link:../../packages/storefront
       geist:
         specifier: 1.8.1
         version: 1.8.1(next@16.4.2(@opentelemetry/api@1.9.0)(@types/node@24.19.2)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))
@@ -357,6 +375,9 @@ importers:
       tailwind-merge:
         specifier: 3.7.0
         version: 3.7.0
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
     devDependencies:
       '@tailwindcss/postcss':
         specifier: 4.3.3
@@ -437,6 +458,12 @@ importers:
       '@rebuttal/core':
         specifier: workspace:*
         version: link:../core
+      '@rebuttal/storefront':
+        specifier: workspace:*
+        version: link:../storefront
+      playwright:
+        specifier: 1.51.1
+        version: 1.51.1
       zod:
         specifier: ^4.1.0
         version: 4.6.7
@@ -514,6 +541,25 @@ importers:
       zod:
         specifier: ^4.1.0
         version: 4.6.7
+
+  packages/storefront:
+    dependencies:
+      '@rebuttal/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
 
   packages/testkit:
     dependencies:
@@ -2617,6 +2663,11 @@ packages:
     resolution: {integrity: sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==}
     engines: {node: '>= 0.8'}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -3357,6 +3408,16 @@ packages:
   pkg-up@3.1.0:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
+
+  playwright-core@1.51.1:
+    resolution: {integrity: sha512-/crRMj8+j/Nq5s8QcvegseuyeZPxpQCZb6HNk3Sos3BlZyAknRjoyJPFWkpNn8v0+P3WiwqFF8P+zQo4eqiNuw==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.51.1:
+    resolution: {integrity: sha512-kkx+MB2KQRkyxjYPc3a0wLZZoDczmppyGJIvQ43l+aZihkaVvmu/21kiyaHeHjiFxjxNNFnUncKmcGIyOojsaw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   postcss@8.5.23:
     resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
@@ -6075,6 +6136,9 @@ snapshots:
 
   fresh@2.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -6715,6 +6779,14 @@ snapshots:
   pkg-up@3.1.0:
     dependencies:
       find-up: 3.0.0
+
+  playwright-core@1.51.1: {}
+
+  playwright@1.51.1:
+    dependencies:
+      playwright-core: 1.51.1
+    optionalDependencies:
+      fsevents: 2.3.2
 
   postcss@8.5.23:
     dependencies:

@@ -24,6 +24,8 @@ cp .env.example .env         # fill in your own sandbox credentials
 pnpm db:up                   # Postgres in Docker…
 pnpm db:embedded             # …or without Docker (leave it running in its own terminal)
 pnpm db:migrate
+pnpm db:seed                 # repeatable synthetic cases/catalog (local loopback only)
+pnpm browser:install         # pinned Chromium for storefront evidence
 
 pnpm paypal:ping             # token + GET /v1/customer/disputes against the sandbox
 pnpm dev                     # web on :3000 + api on :3001 + worker
@@ -36,6 +38,8 @@ SIMULATOR=1 pnpm dev                                   # PayPal served from fixt
 SIMULATOR=1 pnpm sim:dispute not-received              # opens a dispute + posts its webhook
 SIMULATOR=1 pnpm sandbox:lifecycle PP-D-90002 buyer    # require-evidence → (you approve) → adjudicate
 pnpm e2e:sim                                           # the whole pipeline as a test
+pnpm e2e:week1                                          # isolated webhook → worker → store → browser harness
+pnpm test:ui                                            # real offline Chromium storefront capture test
 ```
 The simulator implements the same `PayPalClient` interface as the real client and keeps its state in `.sim/state.json`, which the api and worker share. It honours `PayPal-Request-Id` (a repeated key replays the first response) and enforces dispute state rules such as "offers only in INQUIRY". `SIMULATOR=1` and `WEBHOOK_SKIP_VERIFY=1` are refused when `NODE_ENV=production`.
 
@@ -65,7 +69,8 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
      └─── action.execute: Action row first, then provide-evidence / make-offer / accept-claim
           sla.fire: reminders at T-72/24/6h, policy safeDefault at T-2h
 
- apps/web :3000 ── server-side read routes (Day 4) ──▶ apps/api :3001
+ apps/web :3000 ── server-side read routes ──▶ apps/api :3001
+ apps/worker storefront connector ──▶ demo-store :3002 / fixtures ──▶ historical listing + PNG evidence
 ```
 
 **Safety rails.** Every PayPal write sends `PayPal-Request-Id` = `caseId:decisionId:ACTION` and reuses it on retries. An `Action` row is written before the call. A partial unique index allows only one `SUCCEEDED` action per case and kind. Retries use backoff with jitter and honour `Retry-After` (at most 4 attempts). A 401 refreshes the token once. Evidence must be PDF/PNG/JPG, ≤10MB per file and ≤50MB per submission, checked before upload. The client refuses live PayPal hosts.
@@ -93,4 +98,4 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
 | Webhooks `CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` | [apps/api/src/routes/webhooks.ts](apps/api/src/routes/webhooks.ts) |
 
 ## Status
-Platform (A) and intelligence (B) are built and tested (`pnpm test`: core, decision, connectors, agent, eval, MCP, worker, api, including a simulator end-to-end run with real triage). C's Week 1 web shell and temporary responsive queue are available at `http://127.0.0.1:3000/queue`; the demo-store shell is on `http://127.0.0.1:3002`, with its private seller-record API verified against throwaway databases. API-backed queue/detail data, historical listing rendering, and evidence screenshots are still in progress. PDF evidence packs remain later work. The repository is also waiting on team sign-off for shared `packages/core` and coordinated Prisma changes, the blind labeling round, and live sandbox credentials. See `CLAUDE.md`.
+Platform (A), intelligence (B), and Person C's Week 1 milestone are implemented and tested. The connected queue/detail UI is at `http://127.0.0.1:3000/queue`, the demo store is at `http://127.0.0.1:3002`, and `docs/week1-integration.md` records the simulator webhook → real worker/API/store/browser run. PDF evidence packs, decision/filing UI, dashboards, and appeals remain later work. Shared core-contract approval was recorded before the additive transport/listing/schema changes; live sandbox credentials remain optional for this simulator milestone. See `CLAUDE.md` and `docs/log/c.md`.

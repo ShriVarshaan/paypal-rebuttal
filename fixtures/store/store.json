@@ -10,7 +10,7 @@
       "digital": false,
       "totalCents": 8900,
       "currency": "USD",
-      "items": [{ "name": "Wireless headphones", "sku": "SKU-HEADPHONES-01", "digital": false }],
+      "items": [{ "name": "Wireless headphones", "sku": "SKU-HEADPHONES-01", "digital": false, "productId": "product-legacy-headphones", "listingSnapshotId": "snapshot-product-legacy-headphones-r1", "quantity": 1, "unitPriceCents": 8900 }],
       "checkout": { "ip": "203.0.113.24", "deviceId": "dev_a71", "avs": "Y", "cvv": "M" }
     },
     {
@@ -23,7 +23,7 @@
       "digital": false,
       "totalCents": 6450,
       "currency": "USD",
-      "items": [{ "name": "Waxed canvas jacket, size M", "sku": "SKU-JACKET-M", "digital": false }],
+      "items": [{ "name": "Waxed canvas jacket, size M", "sku": "SKU-JACKET-M", "digital": false, "productId": "product-legacy-jacket", "listingSnapshotId": "snapshot-product-legacy-jacket-r1", "quantity": 1, "unitPriceCents": 6450 }],
       "checkout": { "ip": "198.51.100.7", "deviceId": "dev_b02", "avs": "Y", "cvv": "M" }
     },
     {
@@ -36,7 +36,7 @@
       "digital": true,
       "totalCents": 850,
       "currency": "USD",
-      "items": [{ "name": "Digital recipe e-book", "sku": "SKU-EBOOK-07", "digital": true }],
+      "items": [{ "name": "Digital recipe e-book", "sku": "SKU-EBOOK-07", "digital": true, "productId": "product-legacy-ebook", "listingSnapshotId": null, "quantity": 1, "unitPriceCents": 850 }],
       "checkout": { "ip": "192.0.2.55", "deviceId": "dev_c19", "avs": "Y", "cvv": "M" }
     }
   ],
@@ -63,5 +63,98 @@
     { "id": "cus_203", "createdAt": "2024-11-02T00:00:00.000Z", "priorOrders": 2, "priorDisputes": 0, "knownIps": ["192.0.2.55"], "knownDevices": ["dev_c19"] }
   ],
   "refunds": {},
-  "subscriptions": {}
+  "subscriptions": {},
+  "shipments": {
+    "ord_1001": [
+      {
+        "id": "shipment-ord_1001",
+        "orderId": "ord_1001",
+        "carrier": "USPS",
+        "trackingNumber": "EZ4000000004",
+        "status": "delivered",
+        "address": { "city": "Demo City", "region": "CA", "postalCode": "94107", "country": "US" },
+        "history": [
+          { "at": "2026-10-03T09:00:00.000Z", "status": "in_transit" },
+          { "at": "2026-10-05T16:20:00.000Z", "status": "delivered" }
+        ],
+        "shippedAt": "2026-10-03T09:00:00.000Z",
+        "deliveredAt": "2026-10-05T16:20:00.000Z"
+      }
+    ],
+    "ord_1002": [
+      {
+        "id": "shipment-ord_1002",
+        "orderId": "ord_1002",
+        "carrier": "USPS",
+        "trackingNumber": "EZ3000000003",
+        "status": "delivered",
+        "address": { "city": "Demo City", "region": "NY", "postalCode": "10001", "country": "US" },
+        "history": [
+          { "at": "2026-10-06T09:00:00.000Z", "status": "in_transit" },
+          { "at": "2026-10-08T15:10:00.000Z", "status": "delivered" }
+        ],
+        "shippedAt": "2026-10-06T09:00:00.000Z",
+        "deliveredAt": "2026-10-08T15:10:00.000Z"
+      }
+    ]
+  },
+  "products": [
+    {
+      "id": "product-legacy-headphones",
+      "slug": "legacy-wireless-headphones",
+      "sku": "SKU-HEADPHONES-01",
+      "active": true,
+      "featured": false,
+      "snapshots": [
+        {
+          "id": "snapshot-product-legacy-headphones-r1",
+          "productId": "product-legacy-headphones",
+          "title": "Wireless headphones",
+          "description": "Legacy fixture catalog record retained for the existing sandbox purchase.",
+          "priceCents": 8900,
+          "currency": "USD",
+          "attributes": { "category": "legacy", "digital": false, "fulfillment": "shipping" },
+          "assets": [{ "id": "catalog-v1/legacy-wireless-headphones/hero", "role": "hero", "src": "/catalog/v1/legacy-wireless-headphones.webp", "alt": "Synthetic legacy wireless headphones product photograph" }],
+          "capturedAt": "2026-09-01T09:00:00.000Z",
+          "revision": 1,
+          "rendererVersion": "storefront-v1"
+        }
+      ]
+    },
+    {
+      "id": "product-legacy-jacket",
+      "slug": "legacy-waxed-canvas-jacket",
+      "sku": "SKU-JACKET-M",
+      "active": true,
+      "featured": false,
+      "snapshots": [
+        {
+          "id": "snapshot-product-legacy-jacket-r1",
+          "productId": "product-legacy-jacket",
+          "title": "Waxed canvas jacket, size M",
+          "description": "Olive waxed-canvas jacket with a brass zip and cotton lining.",
+          "priceCents": 6450,
+          "currency": "USD",
+          "attributes": { "category": "legacy", "digital": false, "fulfillment": "shipping" },
+          "assets": [{ "id": "catalog-v1/legacy-waxed-canvas-jacket/hero", "role": "hero", "src": "/catalog/v1/legacy-waxed-canvas-jacket.webp", "alt": "Synthetic legacy waxed canvas jacket product photograph" }],
+          "capturedAt": "2026-10-01T09:00:00.000Z",
+          "revision": 1,
+          "rendererVersion": "storefront-v1"
+        },
+        {
+          "id": "snapshot-product-legacy-jacket-r2",
+          "productId": "product-legacy-jacket",
+          "title": "Waxed canvas jacket — deep olive, size M",
+          "description": "Deep-olive waxed-canvas jacket with a brass zip, cotton lining, and natural colour variation.",
+          "priceCents": 6900,
+          "currency": "USD",
+          "attributes": { "category": "legacy", "digital": false, "colour": "deep olive", "fulfillment": "shipping" },
+          "assets": [{ "id": "catalog-v1/legacy-waxed-canvas-jacket-r2/hero", "role": "hero", "src": "/catalog/v1/legacy-waxed-canvas-jacket-r2.webp", "alt": "Synthetic legacy waxed canvas jacket r2 product photograph" }],
+          "capturedAt": "2026-10-10T09:00:00.000Z",
+          "revision": 2,
+          "rendererVersion": "storefront-v1"
+        }
+      ]
+    }
+  ]
 }

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 import type { ConnectorCase } from "../types.js";
+import { ListingSnapshot, StoreProductListing } from "@rebuttal/core";
 import {
   AccessEvent,
   StoreCustomer,
@@ -9,6 +10,7 @@ import {
   StoreMessage,
   StoreOrder,
   StoreRefund,
+  StoreShipment,
   StoreSubscription,
 } from "./schema.js";
 
@@ -26,6 +28,16 @@ export interface StoreClient {
   customer(customerId: string): Promise<StoreCustomer | null>;
   refunds(orderId: string): Promise<StoreRefund[]>;
   subscription(orderId: string): Promise<StoreSubscription | null>;
+  shipments(orderId: string): Promise<StoreShipment[]>;
+  product(id: string): Promise<StoreProductListing | null>;
+  listingSnapshot(productId: string, at: string): Promise<ListingSnapshot | null>;
+  listingSnapshotById(productId: string, snapshotId: string): Promise<ListingSnapshot | null>;
+  searchOrders(input: {
+    totalCents: number;
+    currency: string;
+    placedAt: string;
+    sku?: string;
+  }): Promise<StoreOrder[]>;
 }
 
 /** How a dispute points at a store order: invoice number, capture id, PayPal order id. */
@@ -56,7 +68,46 @@ export function createFixtureStoreClient(fixture: StoreFixture): StoreClient {
     customer: async (id) => f.customers.find((c) => c.id === id) ?? null,
     refunds: async (id) => f.refunds[id] ?? [],
     subscription: async (id) => f.subscriptions[id] ?? null,
+    shipments: async (id) => f.shipments[id] ?? [],
+    async product(id) {
+      const product = f.products.find((value) => value.id === id || value.slug === id || value.sku === id);
+      if (!product) return null;
+      const currentSnapshot = [...product.snapshots].sort(compareSnapshots)[0]!;
+      return StoreProductListing.parse({ ...product, currentSnapshot });
+    },
+    async listingSnapshot(productId, at) {
+      const instant = Date.parse(at);
+      if (!Number.isFinite(instant)) throw new Error(`Invalid snapshot time: ${at}`);
+      const product = f.products.find(
+        (value) => value.id === productId || value.slug === productId || value.sku === productId,
+      );
+      if (!product) return null;
+      return (
+        [...product.snapshots]
+          .filter((snapshot) => Date.parse(snapshot.capturedAt) <= instant)
+          .sort(compareSnapshots)[0] ?? null
+      );
+    },
+    async listingSnapshotById(productId, snapshotId) {
+      const product = f.products.find(
+        (value) => value.id === productId || value.slug === productId || value.sku === productId,
+      );
+      return product?.snapshots.find((snapshot) => snapshot.id === snapshotId) ?? null;
+    },
+    async searchOrders(input) {
+      return f.orders.filter(
+        (order) =>
+          order.totalCents === input.totalCents &&
+          order.currency?.toUpperCase() === input.currency.toUpperCase() &&
+          Math.abs(Date.parse(order.placedAt) - Date.parse(input.placedAt)) <= 5 * 60_000 &&
+          (!input.sku || order.items.some((item) => item.sku === input.sku)),
+      );
+    },
   };
+}
+
+function compareSnapshots(left: ListingSnapshot, right: ListingSnapshot): number {
+  return Date.parse(right.capturedAt) - Date.parse(left.capturedAt) || right.revision - left.revision;
 }
 
 export const FIXTURE_STORE_PATH = join(import.meta.dirname, "../../../../fixtures/store/store.json");
@@ -103,5 +154,20 @@ export function createHttpStoreClient(opts: HttpStoreOptions): StoreClient {
     customer: (id) => get(`/api/customers/${enc(id)}`, StoreCustomer),
     refunds: async (id) => (await get(`/api/orders/${enc(id)}/refunds`, z.array(StoreRefund))) ?? [],
     subscription: (id) => get(`/api/orders/${enc(id)}/subscription`, StoreSubscription),
+    shipments: async (id) => (await get(`/api/orders/${enc(id)}/shipments`, z.array(StoreShipment))) ?? [],
+    product: (id) => get(`/api/products/${enc(id)}`, StoreProductListing),
+    listingSnapshot: (id, at) =>
+      get(`/api/products/${enc(id)}/snapshots?at=${encodeURIComponent(at)}`, ListingSnapshot),
+    listingSnapshotById: (id, snapshotId) =>
+      get(`/api/products/${enc(id)}/snapshots/${enc(snapshotId)}`, ListingSnapshot),
+    searchOrders: async (input) => {
+      const query = new URLSearchParams({
+        totalCents: String(input.totalCents),
+        currency: input.currency,
+        placedAt: input.placedAt,
+      });
+      if (input.sku) query.set("sku", input.sku);
+      return (await get(`/api/orders/search?${query}`, z.array(StoreOrder))) ?? [];
+    },
   };
 }

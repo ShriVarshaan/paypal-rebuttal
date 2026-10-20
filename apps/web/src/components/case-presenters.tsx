@@ -99,19 +99,29 @@ function relativeDeadline(
   return { label: compact, tone: "neutral", urgent: false };
 }
 
-export function DeadlineDisplay({ dueAt, state }: { dueAt: string | null; state: CaseState }) {
+export function DeadlineDisplay({
+  dueAt,
+  state,
+  now: sharedNow,
+}: {
+  dueAt: string | null;
+  state: CaseState;
+  now?: number;
+}) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
+    if (sharedNow !== undefined) return;
     setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [sharedNow]);
 
   if (TERMINAL_STATES.has(state)) return <span className="text-sm text-muted">Resolved</span>;
   if (!dueAt) return <span className="text-sm text-muted">No deadline</span>;
-  if (now === null) return <span className="text-sm text-muted">Calculating…</span>;
+  const effectiveNow = sharedNow ?? now;
+  if (effectiveNow === null) return <span className="text-sm text-muted">Calculating…</span>;
 
-  const value = relativeDeadline(dueAt, now);
+  const value = relativeDeadline(dueAt, effectiveNow);
   return (
     <span
       className={cn(

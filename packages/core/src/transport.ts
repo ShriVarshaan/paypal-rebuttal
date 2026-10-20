@@ -68,6 +68,16 @@ export const EvidenceRecord = z.object({
 });
 export type EvidenceRecord = z.infer<typeof EvidenceRecord>;
 
+/** Safe action outcome shown in the browser; request/response bodies stay server-side. */
+export const ActionSummary = z.object({
+  id: z.string(),
+  kind: z.string(),
+  status: z.string(),
+  completedAt: IsoDateTime.nullable(),
+  debugId: z.string().nullable(),
+});
+export type ActionSummary = z.infer<typeof ActionSummary>;
+
 export const CaseQueueItem = z.object({
   id: z.string(),
   merchantId: z.string(),
@@ -103,5 +113,6 @@ export const CaseDetail = CaseQueueItem.extend({
   evidence: z.array(EvidenceRecord),
   decisions: z.array(DecisionRecord),
   checklist: EvidenceChecklist,
+  actions: z.array(ActionSummary),
 });
 export type CaseDetail = z.infer<typeof CaseDetail>;

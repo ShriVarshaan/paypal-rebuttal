@@ -24,3 +24,7 @@ docs/roles/person-c-product.md
 packages/db/src/generated/
 .pgdata/
 .sim/
+storage/evidence/
+storage/test-output/
+
+AGENTS.md
