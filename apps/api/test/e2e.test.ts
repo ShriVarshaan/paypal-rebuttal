@@ -1,7 +1,7 @@
 // Simulator-mode end to end (`pnpm e2e:sim`): webhook → sync → enrich → gather →
 // triage (B) → approve → provide-evidence → adjudicate → RESOLVED webhook → WON.
 // Real pg-boss, real Postgres, the api and worker in one process; PayPal is the simulator.
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createOfflineEasyPostSource } from "@rebuttal/connectors";
@@ -22,12 +22,26 @@ let api: FastifyInstance;
 let sim: SimulatorClient;
 let drop: () => Promise<void>;
 
+/**
+ * The recorded dispute has a fixed response deadline, which eventually falls in the past and
+ * trips the deadline override. Copy the fixtures and move that deadline 10 days ahead.
+ */
+function freshFixtures(): string {
+  const dir = mkdtempSync(join(tmpdir(), "rebuttal-fixtures-"));
+  cpSync(join(FIXTURES, "paypal"), dir, { recursive: true });
+  const file = join(dir, "dispute-not-received.json");
+  const dispute = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+  dispute["seller_response_due_date"] = new Date(Date.now() + 10 * 86_400_000).toISOString();
+  writeFileSync(file, JSON.stringify(dispute, null, 2));
+  return dir;
+}
+
 beforeAll(async () => {
   const t = await createTestDatabase(inject("pgAdminUrl"));
   drop = t.drop;
   db = createDb(t.url);
   sim = createSimulatorClient({
-    fixturesDir: join(FIXTURES, "paypal"),
+    fixturesDir: freshFixtures(),
     stateFile: join(mkdtempSync(join(tmpdir(), "rebuttal-e2e-")), "state.json"),
   });
   boss = new PgBoss({ connectionString: t.url });
