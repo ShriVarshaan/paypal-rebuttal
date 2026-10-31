@@ -27,6 +27,7 @@ schemas in `src/store/schema.ts`; extra fields are allowed and preserved.
 | `/api/orders/:id/shipments` | `StoreShipment[]` — carrier, tracking, status, address, history, and shipment times |
 | `/api/orders/search?totalCents=&currency=&placedAt=&sku=` | Exact-one-candidate fallback order search (five-minute placement window) |
 | `/api/customers/:id` | `StoreCustomer` — `{ id, createdAt, priorOrders, priorDisputes, knownIps, knownDevices }` |
+| `/api/products` | `StoreProductListing[]` — active products with their current listing (onboarding's connection check) |
 | `/api/products/:id` | `StoreProductListing` with the current immutable `ListingSnapshot` |
 | `/api/products/:id/snapshots?at=<iso>` | Greatest snapshot at or before `at`, with revision as the timestamp tie-breaker |
 | `/api/products/:id/snapshots/:snapshotId` | Exact immutable snapshot by ID |

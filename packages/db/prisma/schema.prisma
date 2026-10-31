@@ -98,14 +98,17 @@ enum SlaStatus {
 }
 
 model Merchant {
-  id              String   @id @default("default")
+  id              String    @id @default("default")
   name            String
-  defaultCurrency String   @default("USD")
-  createdAt       DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+  defaultCurrency String    @default("USD")
+  /// Set when the onboarding stepper finishes its first sync (Day 16).
+  onboardedAt     DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
 
-  cases    Case[]
-  policies Policy[]
+  cases       Case[]
+  policies    Policy[]
+  connections Connection[]
 
   @@schema("public")
 }
@@ -340,6 +343,27 @@ model Policy {
   updatedAt  DateTime @updatedAt @db.Timestamptz(3)
 
   @@index([merchantId])
+  @@schema("public")
+}
+
+/// A merchant's connection to PayPal or their store (Day 16). Secrets are AES-256-GCM
+/// encrypted with CREDENTIALS_KEY; only non-secret display details are stored in clear.
+model Connection {
+  id               String    @id @default(cuid())
+  merchantId       String    @default("default")
+  merchant         Merchant  @relation(fields: [merchantId], references: [id])
+  /// "paypal" or "store"
+  kind             String
+  /// Non-secret details: masked client id, base URL, store URL.
+  config           Json
+  secretCiphertext String?
+  status           String    @default("UNVERIFIED")
+  lastError        String?
+  verifiedAt       DateTime? @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([merchantId, kind])
   @@schema("public")
 }
 

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { findRepoRoot } from "@rebuttal/paypal";
+import { credentialsKeyFromEnv } from "./secrets.js";
 
 export interface ApiConfig {
   port: number;
@@ -14,6 +15,8 @@ export interface ApiConfig {
   production: boolean;
   /** Absolute root under which browser evidence files may be served. */
   evidenceStorageDir: string;
+  /** AES-256 key for stored merchant credentials (CREDENTIALS_KEY); null disables storing secrets. */
+  credentialsKey: Buffer | null;
 }
 
 export function apiConfigFromEnv(env: NodeJS.ProcessEnv = process.env): ApiConfig {
@@ -34,5 +37,6 @@ export function apiConfigFromEnv(env: NodeJS.ProcessEnv = process.env): ApiConfi
     skipWebhookVerify,
     production,
     evidenceStorageDir: resolve(findRepoRoot(), env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
+    credentialsKey: credentialsKeyFromEnv(env),
   };
 }

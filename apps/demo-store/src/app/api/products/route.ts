@@ -4,6 +4,13 @@ import { CreateProductInput, createCatalog } from "@/lib/catalog";
 import { getDb } from "@/lib/db";
 import { authorize, json } from "@/lib/responses";
 
+/** Product list (onboarding uses it as the connection check). */
+export async function GET(request: Request) {
+  const denied = authorize(request);
+  if (denied) return denied;
+  return json(StoreProductListing.array(), await createCatalog(getDb()).list());
+}
+
 export async function POST(request: Request) {
   const denied = authorize(request);
   if (denied) return denied;
@@ -14,5 +21,5 @@ export async function POST(request: Request) {
 }
 
 export function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: { Allow: "POST, OPTIONS" } });
+  return new NextResponse(null, { status: 204, headers: { Allow: "GET, POST, OPTIONS" } });
 }

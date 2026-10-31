@@ -11,6 +11,21 @@ afterEach(async () => {
 });
 
 describe("immutable catalog", () => {
+  it("lists active products with their current listing, featured first", async () => {
+    const testDb = await createTestDatabase(inject("pgAdminUrl"));
+    drops.push(testDb.drop);
+    const db = createDb(testDb.url);
+    try {
+      await seedDemoData(db, new Date("2026-10-20T12:00:00.000Z"));
+      const list = await createCatalog(db).list();
+      expect(list.length).toBeGreaterThanOrEqual(10);
+      expect(list[0]!.featured).toBe(true);
+      expect(list.every((p) => p.active && p.currentSnapshot.productId === p.id)).toBe(true);
+    } finally {
+      await db.$disconnect();
+    }
+  });
+
   it("keeps purchase-time history while publishing a later revision transactionally", async () => {
     const testDb = await createTestDatabase(inject("pgAdminUrl"));
     drops.push(testDb.drop);

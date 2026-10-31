@@ -81,6 +81,19 @@ const currentSnapshot = {
 
 export function createCatalog(db: Db) {
   return {
+    /** Active products with their current listing, featured first. */
+    async list() {
+      const rows = await db.storeProduct.findMany({
+        where: { active: true },
+        orderBy: [{ featured: "desc" }, { slug: "asc" }],
+        include: { snapshots: currentSnapshot },
+      });
+      return rows.flatMap((row) => {
+        const product = toProduct(row);
+        return product ? [product] : [];
+      });
+    },
+
     async product(idOrSlug: string) {
       const row = await db.storeProduct.findFirst({
         where: { OR: [{ id: idOrSlug }, { slug: idOrSlug }, { sku: idOrSlug }] },

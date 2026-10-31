@@ -11,6 +11,7 @@ import { decisionRoutes } from "./routes/decisions.js";
 import { healthRoutes } from "./routes/health.js";
 import { intelligenceRoutes } from "./routes/intelligence.js";
 import { metricsRoutes } from "./routes/metrics.js";
+import { onboardingRoutes, type ConnectionChecks } from "./routes/onboarding.js";
 import { streamRoutes } from "./routes/stream.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 
@@ -23,6 +24,8 @@ export interface AppDeps {
   checkQueue: () => Promise<void>;
   /** Claude for buyer-message drafts; null/absent = templates. */
   llm?: LlmClient | null;
+  /** Onboarding's PayPal and store checks; tests replace them so nothing leaves the machine. */
+  connectionChecks?: ConnectionChecks;
 }
 
 export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): Promise<FastifyInstance> {
@@ -47,5 +50,6 @@ export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): 
   await app.register(decisionRoutes(deps));
   await app.register(streamRoutes(deps));
   await app.register(metricsRoutes(deps));
+  await app.register(onboardingRoutes(deps));
   return app;
 }
