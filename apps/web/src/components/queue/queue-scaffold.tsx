@@ -113,7 +113,8 @@ export function QueueScaffold() {
     if (query.trim()) value.set("q", query.trim());
     if (quickFilter === "approval") value.set("needsApproval", "true");
     if (quickFilter === "due") value.set("dueWithinHours", "24");
-    if (quickFilter === "won" || quickFilter === "lost") value.set("state", quickFilter.toUpperCase());
+    if (quickFilter === "won") value.set("state", "WON");
+    if (quickFilter === "lost") value.set("state", "LOST,APPEAL_DRAFTED");
     return value.toString();
   }, [query, quickFilter, skip, sort]);
 

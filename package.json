@@ -23,6 +23,7 @@
     "test:ui": "tsx scripts/test-ui.ts",
     "paypal:ping": "tsx --env-file-if-exists=.env scripts/paypal-ping.ts",
     "checkout": "tsx --env-file-if-exists=.env scripts/checkout.ts",
+    "demo:seed": "tsx --env-file-if-exists=.env scripts/demo-seed.ts",
     "sim:dispute": "tsx --env-file-if-exists=.env scripts/sim-dispute.ts",
     "sandbox:require-evidence": "tsx --env-file-if-exists=.env scripts/sandbox/require-evidence.ts",
     "sandbox:adjudicate": "tsx --env-file-if-exists=.env scripts/sandbox/adjudicate.ts",

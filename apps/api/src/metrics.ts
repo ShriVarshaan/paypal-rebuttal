@@ -27,6 +27,8 @@ export interface MetricCase {
   filedEvidence: boolean;
   /** Amount of a successful MAKE_OFFER, when one was made. */
   offerPaidCents: number | null;
+  /** Synthetic demo or seed record (DEMO-* dispute id), disclosed on the dashboard. */
+  demo?: boolean;
 }
 
 export interface MetricRun {
@@ -58,6 +60,9 @@ export function weekStart(d: Date): number {
   return day.getTime() - offset * DAY;
 }
 
+/** A drafted appeal is still a lost case until PayPal reverses it. */
+const outcomeState = (state: string) => (state === "APPEAL_DRAFTED" ? "LOST" : state);
+
 export function computeMetrics(input: {
   cases: MetricCase[];
   orders: { placedAt: Date }[];
@@ -66,17 +71,18 @@ export function computeMetrics(input: {
   weeks?: number;
 }) {
   const { now } = input;
-  const usd = input.cases.filter((c) => c.currency === "USD");
+  const all = input.cases.map((c) => ({ ...c, state: outcomeState(c.state) }));
+  const usd = all.filter((c) => c.currency === "USD");
   const resolved = usd.filter((c) => RESOLVED.has(c.state) && c.resolvedAt);
   const since30 = now.getTime() - 30 * DAY;
   const recovered = (cs: MetricCase[]) => cs.reduce((s, c) => s + (c.amountCents - paidOut(c)), 0);
 
-  const fought = input.cases.filter((c) => c.filedEvidence && (c.state === "WON" || c.state === "LOST"));
+  const fought = all.filter((c) => c.filedEvidence && (c.state === "WON" || c.state === "LOST"));
   const won = fought.filter((c) => c.state === "WON").length;
-  const responseHours = input.cases.flatMap((c) =>
+  const responseHours = all.flatMap((c) =>
     c.firstResponseAt ? [(c.firstResponseAt.getTime() - c.createdAt.getTime()) / 3_600_000] : [],
   );
-  const missed = input.cases.filter((c) => {
+  const missed = all.filter((c) => {
     if (!c.sellerResponseDueAt) return false;
     const due = c.sellerResponseDueAt.getTime();
     const answeredBy = Math.min(
@@ -95,7 +101,7 @@ export function computeMetrics(input: {
   const trend = Array.from({ length: weeks }, (_, i) => {
     const start = thisWeek - (weeks - 1 - i) * WEEK;
     const inWeek = (d: Date) => d.getTime() >= start && d.getTime() < start + WEEK;
-    const disputes = input.cases.filter((c) => inWeek(c.paypalCreatedAt)).length;
+    const disputes = all.filter((c) => inWeek(c.paypalCreatedAt)).length;
     const orders = input.orders.filter((o) => inWeek(o.placedAt)).length;
     return {
       weekStart: new Date(start).toISOString(),
@@ -105,9 +111,9 @@ export function computeMetrics(input: {
     };
   });
 
-  const reasons = [...new Set(input.cases.map((c) => c.reason))].sort();
+  const reasons = [...new Set(all.map((c) => c.reason))].sort();
   const byReason = reasons.map((reason) => {
-    const cs = input.cases.filter((c) => c.reason === reason);
+    const cs = all.filter((c) => c.reason === reason);
     return {
       reason,
       won: cs.filter((c) => c.state === "WON").length,
@@ -138,9 +144,10 @@ export function computeMetrics(input: {
     winRate: fought.length ? won / fought.length : null,
     fought: fought.length,
     won,
-    casesTotal: input.cases.length,
-    casesResolved: input.cases.filter((c) => RESOLVED.has(c.state)).length,
-    casesOpen: input.cases.filter((c) => !RESOLVED.has(c.state)).length,
+    casesTotal: all.length,
+    demoCases: all.filter((c) => c.demo).length,
+    casesResolved: all.filter((c) => RESOLVED.has(c.state)).length,
+    casesOpen: all.filter((c) => !RESOLVED.has(c.state)).length,
     responded: responseHours.length,
     medianHoursToRespond: median(responseHours),
     deadlinesMissed: missed.length,

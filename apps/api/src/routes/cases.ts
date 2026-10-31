@@ -13,7 +13,12 @@ export function tokenMatches(header: string | undefined, token: string): boolean
 }
 
 const Query = z.object({
-  state: CaseState.optional(),
+  /** One CaseState, or several separated by commas (e.g. LOST,APPEAL_DRAFTED). */
+  state: z
+    .string()
+    .transform((v) => v.split(",").map((s) => s.trim()))
+    .pipe(z.array(CaseState).min(1).max(12))
+    .optional(),
   reason: z.string().trim().min(1).optional(),
   q: z.string().trim().max(200).optional(),
   sort: z
@@ -113,7 +118,7 @@ export function caseRoutes(deps: AppDeps): FastifyPluginAsync {
       const q = parsed.data;
       const rows = await deps.db.case.findMany({
         where: {
-          ...(q.state ? { state: q.state } : {}),
+          ...(q.state ? { state: { in: q.state } } : {}),
           ...(q.reason ? { reason: q.reason } : {}),
         },
         include: caseRelations,

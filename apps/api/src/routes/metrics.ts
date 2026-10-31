@@ -59,6 +59,7 @@ export function metricsRoutes(deps: AppDeps, opts: MetricsOptions = {}): Fastify
           firstResponseAt: responses[0]?.completedAt ?? null,
           filedEvidence: responses.some((a) => a.kind === "PROVIDE_EVIDENCE"),
           offerPaidCents: typeof offerCents === "number" ? offerCents : null,
+          demo: r.paypalDisputeId.startsWith("DEMO-"),
         };
       });
       return computeMetrics({ cases, orders, runs, now: new Date(), weeks });

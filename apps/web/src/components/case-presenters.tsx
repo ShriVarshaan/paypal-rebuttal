@@ -116,7 +116,8 @@ export function DeadlineDisplay({
     return () => window.clearInterval(timer);
   }, [sharedNow]);
 
-  if (TERMINAL_STATES.has(state)) return <span className="text-sm text-muted">Resolved</span>;
+  if (TERMINAL_STATES.has(state) || state === "APPEAL_DRAFTED")
+    return <span className="text-sm text-muted">Resolved</span>;
   if (!dueAt) return <span className="text-sm text-muted">No deadline</span>;
   const effectiveNow = sharedNow ?? now;
   if (effectiveNow === null) return <span className="text-sm text-muted">Calculating…</span>;

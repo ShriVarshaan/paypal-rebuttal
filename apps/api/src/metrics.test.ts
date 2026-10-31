@@ -87,6 +87,18 @@ describe("dashboard metrics", () => {
     });
   });
 
+  it("counts a drafted appeal as a lost case", () => {
+    const m = computeMetrics({
+      now,
+      orders: [],
+      runs: [],
+      cases: [
+        c({ state: "APPEAL_DRAFTED", filedEvidence: true, resolvedAt: new Date("2026-10-29T00:00:00Z") }),
+      ],
+    });
+    expect(m).toMatchObject({ casesResolved: 1, casesOpen: 0, fought: 1, winRate: 0, paidOutCents: 10_000 });
+  });
+
   it("starts weeks on Monday UTC", () => {
     expect(new Date(weekStart(new Date("2026-10-31T12:00:00Z"))).toISOString()).toBe(
       "2026-10-26T00:00:00.000Z",

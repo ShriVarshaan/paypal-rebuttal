@@ -19,6 +19,7 @@ import {
   ReasonLabel,
   StateBadge,
 } from "@/components/case-presenters";
+import { AppealPanel } from "@/components/decision/appeal-panel";
 import { DecisionPanel } from "@/components/decision/decision-panel";
 import { MessageComposer } from "@/components/message-composer";
 import { Badge } from "@/components/ui/badge";
@@ -354,7 +355,8 @@ export function CaseDetailView({ id }: { id: string }) {
           <ErrorState message={`${query.error.message}. The page shows the last data received.`} />
         </div>
       ) : null}
-      <div className="mt-6">
+      <div className="mt-6 grid gap-5">
+        <AppealPanel value={value} />
         <DecisionPanel value={value} />
       </div>
       <div className="mt-5 grid gap-5 xl:grid-cols-3">

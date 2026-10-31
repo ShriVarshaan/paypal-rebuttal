@@ -20,6 +20,7 @@ const Summary = z.object({
   fought: z.number(),
   won: z.number(),
   casesTotal: z.number(),
+  demoCases: z.number().default(0),
   casesResolved: z.number(),
   casesOpen: z.number(),
   responded: z.number(),
@@ -107,6 +108,15 @@ export function Dashboard() {
     <div className="grid gap-5">
       {query.error ? (
         <ErrorState message={`${query.error.message}. Showing the last numbers received.`} />
+      ) : null}
+      {m.demoCases ? (
+        <p
+          className="rounded-[6px] border border-warning/25 bg-warning-soft px-4 py-2.5 text-sm text-foreground-strong"
+          role="note"
+        >
+          Includes {m.demoCases} synthetic demo case{m.demoCases === 1 ? "" : "s"} (DEMO-…) seeded for this
+          walkthrough.
+        </p>
       ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="md:col-span-2">

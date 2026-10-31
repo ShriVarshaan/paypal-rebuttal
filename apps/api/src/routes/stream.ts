@@ -53,10 +53,13 @@ export function streamRoutes(deps: AppDeps, opts: StreamOptions = {}): FastifyPl
       const tick = async () => {
         if (busy || closed) return;
         busy = true;
+        // Never read past "now": a row stamped in the future would otherwise move the cursor
+        // ahead and silence every real event until that time.
+        const upTo = new Date();
         try {
           const [events, notifications] = await Promise.all([
             deps.db.caseEvent.findMany({
-              where: { createdAt: { gt: cursor } },
+              where: { createdAt: { gt: cursor, lte: upTo } },
               orderBy: { createdAt: "asc" },
               take: 200,
               include: {
@@ -73,7 +76,7 @@ export function streamRoutes(deps: AppDeps, opts: StreamOptions = {}): FastifyPl
               },
             }),
             deps.db.notification.findMany({
-              where: { createdAt: { gt: cursor } },
+              where: { createdAt: { gt: cursor, lte: upTo } },
               orderBy: { createdAt: "asc" },
               take: 50,
             }),
