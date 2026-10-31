@@ -9,20 +9,23 @@ Guidance for Claude Code when working in this repository.
 - Team roles: A = Platform & PayPal, B = Intelligence & Decisions, C = Product, Evidence & Demo (see `README.md`).
 
 ## Status
-Platform (A) and intelligence (B) are in place: PayPal client, webhooks, worker jobs (sync, poll, enrich, gather, **triage**, execute, SLA, **appeal**), simulator mode, the evidence matrix, win model, EV/offer/policy engine, Claude agents, eval harness and an MCP server. `packages/core` and the Prisma schema are still drafts pending A + B + C sign-off. C's parts are not built yet: `packages/evidence` (PDF packs, so FIGHT decisions wait in FILING until `pack.ready` or the T-2h deadline), `apps/web` and `apps/demo-store` (the connectors read `fixtures/store/` until its API exists; see `packages/connectors/STORE_API.md`). **Keep Commands and Layout current**, and never document commands that don't work yet.
+Platform (A) and intelligence (B) are in place: PayPal client, webhooks, worker jobs (sync, poll, enrich, gather, **triage**, execute, SLA, **appeal**), simulator mode, the evidence matrix, win model, EV/offer/policy engine, Claude agents, eval harness and an MCP server. `packages/core` and the Prisma schema are still drafts pending A + B + C sign-off. C's parts are built: `packages/evidence` (PDF packs: `pack.build` runs after triage for FIGHT, `pack.ready` files approved decisions), `apps/web` (queue, case detail with the decision panel and approvals, settings, dashboard, eval, onboarding, live updates over SSE), `apps/demo-store` (Fern & Field Goods with immutable listing snapshots; see `packages/connectors/STORE_API.md`) and the demo tooling (`demo:seed`, `e2e:ui`). **Keep Commands and Layout current**, and never document commands that don't work yet.
 
 ## Stack
 TypeScript everywhere · pnpm workspaces + turborepo · Next.js + AG Grid + shadcn/Tailwind (web) · Fastify (api) · pg-boss worker · Postgres + Prisma · zod for all schemas · Playwright (HTML→PDF, screenshots) + pdf-lib · Anthropic SDK · PayPal Agent Toolkit + REST.
 
 ## Layout
 ```
-apps/web          Next.js UI: AG Grid case queue, case detail, decisions, dashboard  (C; placeholder)
-apps/api          Fastify: /webhooks/paypal, /healthz, /cases, /decisions/:id/approve,
-                  PATCH /decisions/:id, /policy, /cases/:id/triage, /cases/:id/buyer-message, /metrics/agents
+apps/web          Next.js UI: AG Grid queue, case detail + decision panel, settings, dashboard, eval,
+                  onboarding; allowlisted server-side proxy to the api, SSE live updates   (C)
+apps/api          Fastify: /webhooks/paypal, /healthz, /cases, /decisions/:id/approve|reject|override|pack,
+                  PATCH /decisions/:id, PUT /decisions/:id/narrative, /packs/:id/file, /policy,
+                  /cases/:id/triage|buyer-message|messages, /notifications, /events/stream (SSE),
+                  /metrics/summary|agents, /eval/report, /onboarding
 apps/worker       pg-boss jobs: dispute.sync/poll, case.enrich/gather, case.triage (B), action.execute,
-                  pack.ready, sla.fire, case.appeal (B)
+                  pack.build + pack.ready (C), message.send (C), sla.fire, case.appeal (B)
 apps/mcp          Rebuttal MCP server for Claude Desktop: list/explain/approve (B, stretch)
-apps/demo-store   Mock seller store (C; placeholder)
+apps/demo-store   Fern & Field Goods (fictional): products, immutable listing snapshots, orders, Store API (C)
 packages/core     zod contract: domain types, money, evidence matrix, policy, state machine,
                   agent output + Decision analysis schemas  ← CONTRACT (draft, B owns)
 packages/db       Prisma schema + client (draft, C owns); partial unique index in the init migration
@@ -32,7 +35,9 @@ packages/connectors  EvidenceSource interface; EasyPost (+ offline stand-in), me
                   account records over a StoreClient (demo-store API or fixtures/store)
 packages/decision signals → win model (weights.v0/v1.json) → EV + offer optimizer → autonomy policy
 packages/agent    Claude agents: triage, narrative, buyer message, appeal, Haiku classification (models.ts)
-packages/evidence PDF evidence pack generation (C; empty)
+packages/evidence PDF evidence packs: React print templates → Playwright PDF → pdf-lib merge/stamp,
+                  per-evidence-type split, ≤10MB/≤50MB step-down, `evidence:preview` (C)
+packages/storefront  Versioned listing renderer shared by the store pages and screenshot capture (C)
 packages/eval     60 labeled cases (cases/*.json), strategies, metrics, calibration, injection set, report
 packages/testkit  embedded Postgres for tests (no Docker needed)
 fixtures/         PayPal payloads and store records for tests and SIMULATOR=1 (see fixtures/README.md)
@@ -43,7 +48,7 @@ docs/             plan, roles, decision-engine.md, eval-report.md, sandbox-runbo
 ## Commands
 - `pnpm install`: also runs `prisma generate` for `packages/db`
 - `pnpm db:up` (Docker) **or** `pnpm db:embedded` (no Docker; leave running), then `pnpm db:migrate`
-- `pnpm dev`: api (:3001) + worker with watch. `SIMULATOR=1 pnpm dev` runs fully offline on fixtures
+- `pnpm dev`: web (:3000), api (:3001), worker and demo store (:3002) with watch. `SIMULATOR=1 pnpm dev` runs fully offline on fixtures
 - `pnpm test`: all vitest suites. Worker/api tests start an embedded Postgres themselves, or set `TEST_DATABASE_URL` to the `postgres` db of a running server
 - `pnpm e2e:sim`: simulator-mode end to end (webhook → … → WON) with real pg-boss
 - `pnpm typecheck`, `pnpm lint`, `pnpm format`
@@ -54,6 +59,9 @@ docs/             plan, roles, decision-engine.md, eval-report.md, sandbox-runbo
 - `pnpm checkout`: sandbox checkout page on :3005 for making payments to dispute (docs/sandbox-runbook.md)
 - `pnpm eval [--llm] [--budget-usd N]`: score all strategies on the 60 cases; writes `docs/eval-report.md` and `packages/eval/reports/`. `--llm` adds the Claude rows (cached in `packages/eval/cache/`)
 - `pnpm eval:generate [--with-claude]`, `pnpm eval:calibrate` (writes `packages/decision/src/weights.v1.json`), `pnpm eval:label <name>` (blind labeling), `pnpm eval:agreement`, `pnpm eval:label-sheet`
+- `pnpm db:seed`: Week 1 synthetic catalog and cases. `pnpm demo:seed [--reset] [--history]`: the seven curated video disputes through the running stack (simulator only; `--history` adds disclosed DEMO-HIST data)
+- `pnpm browser:install` once per machine (Chromium for listing screenshots and PDFs); `pnpm evidence:preview <caseId|disputeId> [--open]` writes a pack to `tmp/evidence-preview/`
+- `pnpm e2e:ui [--screenshots]`: FIGHT / OFFER / ACCEPT through the browser against `SIMULATOR=1 pnpm dev`; `--screenshots` refreshes `docs/media/`. `pnpm e2e:week1`, `pnpm test:ui`: Week 1 harness and the real-Chromium capture test
 - `pnpm --filter @rebuttal/mcp start`: the MCP server on stdio (needs `API_URL`, `API_TOKEN`)
 
 ## Rules

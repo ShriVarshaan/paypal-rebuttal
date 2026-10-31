@@ -233,3 +233,55 @@ Stop at the Week 1 milestone. Week 2 begins with PDF evidence packs and the deci
 ### Next task
 
 Hand off the completed Week 1 milestone; do not start Week 2 implementation.
+
+## 2026-10-31 — Weeks 2–3: evidence packs, decisions, product surfaces, demo
+
+Branches, stacked on `c/store-snapshots` and pushed (not merged): `c/evidence-pdf` → `c/decision-panel` →
+`c/settings-live` → `c/dashboard-eval` → `c/onboarding` → `c/demo-data` → `c/e2e-ui-docs`.
+
+### Week 1 discrepancies found and fixed
+
+- `pnpm typecheck` failed in the worker: connectors import `.tsx` from `@rebuttal/storefront` and only the api set `jsx`.
+  `jsx: react-jsx` now lives in `tsconfig.base.json`.
+- `e2e:sim` failed once the fixture's fixed `seller_response_due_date` (2026-10-29) passed: the deadline override
+  auto-approved. The test now copies the fixtures with the deadline moved ten days ahead.
+- Under `pnpm dev`, the worker (cwd `apps/worker`) and api (cwd `apps/api`) resolved `storage/evidence` to different
+  directories, so screenshots were written where the api could not serve them. Storage paths are anchored at the repo root.
+- The web app never loaded the root `.env`, so its proxy had no `API_URL`/`API_TOKEN` under `pnpm dev`.
+- The global `button/input { font: inherit }` reset was unlayered and overrode every Tailwind text-size utility on controls.
+- The scaffold's synthetic rows (`lib/demo-cases.ts`) were still in the tree; the inert "Command /" button was removed.
+
+### Delivered (role doc Days 8–19)
+
+- **Days 8–9:** `packages/evidence` (cover letter, per-kind exhibits, pdf-lib merge with page stamps, per-type split,
+  quality step-down to 10MB/50MB, `evidence:preview`), `pack.build` worker job queued by triage, `SUPERSEDED` packs.
+- **Days 10–11:** decision panel, approve/edit/override/reject with reasons and audit events, narrative editor with citation
+  validation that rebuilds the PDF, iframe PDF preview, action outcomes with PayPal `debug_id` on the timeline.
+- **Day 12:** buyer message composer → idempotent `SEND_MESSAGE` Action → `message.send` job; settings over `Policy`.
+- **Day 13:** `/events/stream` SSE, live queue/case/bell, toasts, notification bell, mobile check at 390px.
+- **Day 14:** `pnpm e2e:ui` — FIGHT 12.8s, OFFER 9.2s, ACCEPT 3.0s, all PASS through the browser only.
+- **Day 15:** dashboard (`/metrics/summary`, tested definitions) and eval page (B's `latest.json`).
+- **Day 16:** onboarding stepper, `Connection` table with AES-256-GCM secrets (`CREDENTIALS_KEY`), demo-store product list.
+- **Day 17:** `pnpm demo:seed` (seven curated disputes through the pipeline, `--history`, `--reset`), appeal panel.
+- **Days 18–19:** storyboard v1, `demo-script.md`, `submission.md`, gallery in `docs/media/`, README/CLAUDE.md updated.
+
+### Commands and results
+
+- `pnpm typecheck` — 15/15 tasks plus the root project pass. `pnpm lint` — clean.
+- `pnpm test` — 298 passed, 1 skipped, across 13 suites (api 44, worker 55, evidence 12, core 43, paypal 44, decision 31,
+  agent 22, eval 15, connectors 15, demo-store 7, db 4, mcp 4, storefront 2).
+- `pnpm e2e:ui --screenshots` — 3/3 PASS against `SIMULATOR=1 pnpm dev` (API on :3011 locally because Docker held :3001).
+- `pnpm demo:seed --reset --history` — every story lands in its intended state.
+
+### Shared-contract changes needing A+B review
+
+Additive only: `CaseEventType` (+PACK_READY, PACK_FAILED, DECISION_APPROVED/REJECTED/OVERRIDDEN, NARRATIVE_EDITED,
+MESSAGE_SENT), `assignExhibits` skips connector diagnostics (`isDiagnostic`), `ActionSummary` (+decisionId, createdAt,
+attempts, errorMessage), `CaseDetail.pack` (`PackSummary`). Worker `Deps` gained `pdfEngine` and `evidenceStorageDir`;
+triage queues `pack.build` for FIGHT; B's `PATCH /decisions/:id` now shares `editDecision` (offer edits regenerate the note).
+
+### Not done / honest limits
+
+- No video was recorded and no live sandbox run was made (no sandbox credentials in this environment); the script covers both.
+- Stored onboarding credentials are not yet used by the running PayPal client, which still reads `PAYPAL_*` from env.
+- Headless Chromium cannot show the PDF iframe; the gallery PDF images were rasterised from the real pack once.

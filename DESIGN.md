@@ -123,4 +123,7 @@ Stitch references should cover:
 
 ## Implementation boundary
 
-Week 1 implements queue and case detail plus explicit future-feature pages. Decision editing, approvals, PDF packs, filing controls, policy settings, analytics, and onboarding remain labeled later-week work.
+Weeks 1–3 are implemented: queue, case detail with the decision panel and approval dialogs, PDF evidence preview, buyer
+messages, settings, dashboard, eval and onboarding. Charts follow the dataviz rules: one axis, emphasis through the accent
+rather than extra hues, status colours only for outcomes (always with a legend), hover and keyboard tooltips, and a table
+view for every chart. See `ui-registry.md` for the verified component patterns.

@@ -49,6 +49,23 @@ So the engine says **FIGHT**. It waits for approval because $89 is over the $50 
 - **Ablation:** rules only vs Claude only vs hybrid. The Claude rows need an API key and run with `pnpm eval --llm` (cached, with a spend cap); they're not in this report yet. *[Fill in after the final run.]*
 - **Limits:** the cases are synthetic, and the generator shares the engine's feature definitions. The offer acceptance curve is an assumption that the simulated buyers follow. The hand labels were written by the same person who set the weights, which inflates agreement on them. The blind three-way labeling round (`pnpm eval:label`, then `pnpm eval:agreement` for Fleiss' kappa) is the honest check. *[Fill in kappa.]*
 
+## Product, evidence and demo (C)
+
+- **The evidence pack is written for a PayPal reviewer.** A cover letter (dispute facts, the cited statement, a dated
+  timeline, an exhibit index) and one labeled exhibit per record: carrier scans with the delivery postal code checked
+  against the order, the listing as it was at purchase (immutable snapshot + screenshot) and, when the listing changed
+  later, a side-by-side diff; the message thread with flagged messages highlighted; access logs with masked IPs. Every page
+  is stamped "Dispute · Exhibit EX-n · Page x of y". Exhibit numbers are the ones the narrative cites, so `[EX-2]` in the
+  statement is EX-2 in the PDF.
+- **PayPal's limits are enforced by degrading, not failing:** screenshots are re-encoded at decreasing quality until each
+  file is ≤10MB and the submission ≤50MB; a text-only pack is the last resort. Files are split per `evidence_type`.
+- **Human in the loop by default.** The decision panel shows why (p(win), EV of each option, the model's reasons, Claude's
+  cited adjustment), the PDF exactly as filed, and asks before anything reaches PayPal. Overrides and rejections need a
+  reason and land in the audit trail; edits to the statement must keep citations and regenerate the PDF.
+- **Measured, then shown.** `pnpm e2e:ui` drives the three decision paths through the browser (FIGHT 13s including the
+  PDF, filing and adjudication; OFFER 9s; ACCEPT 3s). The dashboard computes recovered money against refunding
+  everything, win rate, time to respond and missed deadlines from the cases themselves, and labels synthetic demo data.
+
 ## Claude Code split
 
 **Claude Code wrote the code:** every package and test in B's area (core contract additions, matrix, win model, EV and offer optimizer, policy engine, the agents and their validators, connectors, worker jobs, api routes, eval harness, MCP server), the fixtures, and these docs. It also found and fixed integration bugs. The offline EasyPost stand-in reported no delivery location. The embedded test Postgres defaulted to WIN1252 on Windows. The SLA scheduler treated "waiting for the evidence pack" as already answered. And an e2e assertion raced the SLA cancellation.

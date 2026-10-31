@@ -25,10 +25,10 @@ pnpm db:up                   # Postgres in Docker…
 pnpm db:embedded             # …or without Docker (leave it running in its own terminal)
 pnpm db:migrate
 pnpm db:seed                 # repeatable synthetic cases/catalog (local loopback only)
-pnpm browser:install         # pinned Chromium for storefront evidence
+pnpm browser:install         # pinned Chromium for listing screenshots and PDF evidence packs
 
 pnpm paypal:ping             # token + GET /v1/customer/disputes against the sandbox
-pnpm dev                     # web on :3000 + api on :3001 + worker
+pnpm dev                     # web :3000, api :3001, worker, demo store :3002
 pnpm test                    # everything; brings its own throwaway Postgres
 ```
 
@@ -40,7 +40,11 @@ SIMULATOR=1 pnpm sandbox:lifecycle PP-D-90002 buyer    # require-evidence → (y
 pnpm e2e:sim                                           # the whole pipeline as a test
 pnpm e2e:week1                                          # isolated webhook → worker → store → browser harness
 pnpm test:ui                                            # real offline Chromium storefront capture test
+pnpm demo:seed --reset --history                        # the seven curated video disputes (+ disclosed demo history)
+pnpm e2e:ui                                             # FIGHT / OFFER / ACCEPT through the browser, timed
+pnpm evidence:preview PP-D-90001 --open                 # build a case's PDF evidence pack into tmp/
 ```
+Onboarding stores PayPal and store credentials encrypted with `CREDENTIALS_KEY` (see `.env.example`); the running worker still reads `PAYPAL_*` from the environment.
 The simulator implements the same `PayPalClient` interface as the real client and keeps its state in `.sim/state.json`, which the api and worker share. It honours `PayPal-Request-Id` (a repeated key replays the first response) and enforces dispute state rules such as "offers only in INQUIRY". `SIMULATOR=1` and `WEBHOOK_SKIP_VERIFY=1` are refused when `NODE_ENV=production`.
 
 ## Decisions, agents and evaluation
@@ -65,11 +69,14 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
      │   apps/worker ◀───────────┘
      │    dispute.poll (every 60s, update_time_after) ─▶ dispute.sync ─▶ Case + CaseEvents, SLA jobs
      │    case.enrich (capture → order → shipping, trackers) ─▶ case.gather (EasyPost, …)
-     │    case.triage (B) ─▶ Decision ─▶ approve (api) ─▶ action.execute ◀─ pack.ready (C)
+     │    case.triage (B) ─▶ Decision ─▶ pack.build (C: PDF) ─▶ pack.ready ─┐
+     │    approve (api, or policy) ─▶ action.execute ◀───────────────────────┘
+     │    message.send (C): seller → buyer through send-message, idempotent Action
      └─── action.execute: Action row first, then provide-evidence / make-offer / accept-claim
           sla.fire: reminders at T-72/24/6h, policy safeDefault at T-2h
 
- apps/web :3000 ── server-side read routes ──▶ apps/api :3001
+ apps/web :3000 ── allowlisted server-side proxy (token never in the browser) ──▶ apps/api :3001
+                 ◀── /events/stream (SSE): queue, case page and bell update live
  apps/worker storefront connector ──▶ demo-store :3002 / fixtures ──▶ historical listing + PNG evidence
 ```
 
@@ -84,7 +91,7 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
 | `POST …/{id}/provide-evidence` (multipart) | `disputes.provideEvidence`, called by [apps/worker/src/jobs/execute.ts](apps/worker/src/jobs/execute.ts) |
 | `POST …/{id}/make-offer` | `disputes.makeOffer`, executor |
 | `POST …/{id}/accept-claim` | `disputes.acceptClaim`, executor |
-| `POST …/{id}/send-message` | `disputes.sendMessage` |
+| `POST …/{id}/send-message` | `disputes.sendMessage`, called by [apps/worker/src/jobs/message.ts](apps/worker/src/jobs/message.ts) from the case page composer |
 | `POST …/{id}/acknowledge-return-item` | `disputes.acknowledgeReturnItem` |
 | `POST …/{id}/appeal` (multipart) | `disputes.appeal` |
 | `POST …/{id}/provide-supporting-info` (multipart) | `disputes.provideSupportingInfo` |
@@ -98,4 +105,10 @@ Without `ANTHROPIC_API_KEY` every agent uses its deterministic template, so the 
 | Webhooks `CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` | [apps/api/src/routes/webhooks.ts](apps/api/src/routes/webhooks.ts) |
 
 ## Status
-Platform (A), intelligence (B), and Person C's Week 1 milestone are implemented and tested. The connected queue/detail UI is at `http://127.0.0.1:3000/queue`, the demo store is at `http://127.0.0.1:3002`, and `docs/week1-integration.md` records the simulator webhook → real worker/API/store/browser run. PDF evidence packs, decision/filing UI, dashboards, and appeals remain later work. Shared core-contract approval was recorded before the additive transport/listing/schema changes; live sandbox credentials remain optional for this simulator milestone. See `CLAUDE.md` and `docs/log/c.md`.
+All three roles' plans are implemented and tested in simulator mode. Person C's product: the live queue, case detail
+with the decision panel (p(win), EV bars, rationale, Claude's bounded adjustment), PDF evidence packs with in-browser
+preview, approve / edit / override / reject with an audit trail, the buyer message composer, settings, the analytics
+dashboard, the eval page and onboarding. `pnpm e2e:ui` runs the three decision paths through the browser; the video plan is
+[docs/demo-storyboard.md](docs/demo-storyboard.md) and [docs/demo-script.md](docs/demo-script.md), the submission draft is
+[docs/submission.md](docs/submission.md). The live sandbox walkthrough needs sandbox credentials
+([docs/sandbox-runbook.md](docs/sandbox-runbook.md)). See `CLAUDE.md` and `docs/log/c.md`.

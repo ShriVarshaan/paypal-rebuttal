@@ -14,15 +14,14 @@ Verified patterns for the product workspace. Keep this file aligned with `DESIGN
 
 - **Desktop/tablet:** persistent 224px sidebar, merchant header, content canvas. The active nav row has a pale accent fill and a 3px left marker.
 - **Mobile:** sidebar becomes a left Radix dialog drawer below 768px. The trigger and close control have explicit accessible names.
-- **Navigation status:** unfinished destinations stay reachable but carry a `Later` label and an honest placeholder page.
-- **Environment:** simulator/local status stays at the bottom of navigation so recorded demos cannot be mistaken for production.
-- **Header controls:** 44px notification and theme controls. Notifications use a short, honest empty state until event data exists.
+- **Live status:** the bottom of the navigation shows the event-stream state (Live / Connecting / Offline · polling) and links to setup.
+- **Header controls:** merchant name from the api; 44px notification bell (unread count, critical count turns red) and theme control.
 
 ## Queue controls
 
 - **Quick filters:** bordered rectangular toggles; selected state uses the accent-subtle token and `aria-pressed`.
 - **Search:** one full-width labeled search field with a separate reset button. Keyboard focus uses a 2px accent ring.
-- **Status note:** temporary/synthetic data is named in the page heading area and must disappear when the Day 4 API connection lands.
+- **Setup banner:** a slim accent link above the queue until onboarding has run its first sync.
 
 ## Queue data presentation
 
@@ -70,3 +69,23 @@ Verified patterns for the product workspace. Keep this file aligned with `DESIGN
 - **Checklist:** found, weak, and missing are semantic badges with text labels; score is the core `assessCompleteness` result, never a frontend approximation. Required/strong/nice tiers and collection hints remain visible beside each item.
 - **Evidence links:** exhibit labels are the current `assignExhibits` mapping. A linked file goes through the server proxy; structured-only evidence says so explicitly instead of presenting a broken preview.
 - **Verified:** C7 browser harness loaded the queue and detail pages from fresh webhook-created data, including the historical listing evidence state.
+
+## Week 2–3 components
+
+- **Decision panel:** eyebrow ("Recommendation", or "Your decision" after an override) + status badge, a mono 34px headline
+  (`FIGHT`, `OFFER $16.00`, `ACCEPT`), actions on the right (primary Approve & file; Edit, Override, Reject). Body: p(win)
+  meter (tick marks the model before Claude's nudge), EV bars (best option in accent, others neutral, zero baseline),
+  rationale rows with ± icons, Claude review box, missing evidence linked to `#req-*` anchors.
+- **Dialogs:** Radix modal with title, description that states exactly what PayPal will receive, footer actions. Reject and
+  override require a reason. Never `window.confirm`.
+- **Pack card:** Building / Ready / Failed badge, per-evidence-type file rows with download, warnings in amber, Preview PDF
+  opens an iframe modal.
+- **Timeline:** one icon + sentence per event, actor and time in mono, buyer/seller text in a subdued bubble, failures in
+  danger tone with PayPal's `debug_id`.
+- **Toasts:** bottom-right, polite live region, 7s, link to the case when relevant.
+- **Charts:** `ChartCard` (title, subtitle, legend, Show table), `LineChart` (crosshair tooltip, end labels, optional
+  reference line), `StackedBars` (2px gaps), `ConfusionMatrix` (one-hue sequential, outlined diagonal), `ReliabilityChart`,
+  `StatTile` (one hero per view).
+- **Settings:** two-column sections (explanation left, controls right), number fields in display units, sticky save bar
+  that says what is unsaved or invalid.
+- **Onboarding:** numbered step cards that turn green when done; results say exactly what was checked.
