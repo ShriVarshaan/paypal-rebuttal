@@ -1,4 +1,5 @@
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { createEasyPostSource, createOfflineEasyPostSource } from "./easypost.js";
 import { createHttpStoreClient, loadFixtureStore, type StoreClient } from "./store/client.js";
 import {
@@ -10,6 +11,21 @@ import {
 import { createStorefrontCaptureService } from "./storefront-capture.js";
 import { createStorefrontSource } from "./storefront.js";
 import type { EvidenceSource } from "./types.js";
+
+/**
+ * Relative storage paths are anchored at the repository root, not the process cwd: under
+ * `pnpm dev` the worker runs in apps/worker and the api in apps/api, and both must agree on
+ * where evidence files live.
+ */
+export function fromRepoRoot(path: string, start = process.cwd()): string {
+  let dir = resolve(start);
+  for (;;) {
+    if (existsSync(join(dir, "pnpm-workspace.yaml"))) return resolve(dir, path);
+    const parent = dirname(dir);
+    if (parent === dir) return resolve(start, path);
+    dir = parent;
+  }
+}
 
 /**
  * The store the connectors read: the demo store's API when STORE_API_URL is set, otherwise
@@ -42,8 +58,8 @@ export function defaultSources(
     ((env["STORE_SOURCE"] ?? "auto") === "auto" && env["SIMULATOR"] === "1");
   const capture = createStorefrontCaptureService({
     mode: fixtureMode ? "fixture" : "http",
-    storageDir: resolve(env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
-    assetsDir: resolve(env["STORE_ASSETS_DIR"] ?? "apps/demo-store/public"),
+    storageDir: fromRepoRoot(env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
+    assetsDir: fromRepoRoot(env["STORE_ASSETS_DIR"] ?? "apps/demo-store/public"),
     ...(env["STORE_WEB_URL"] ? { webUrl: env["STORE_WEB_URL"] } : {}),
   });
   return [

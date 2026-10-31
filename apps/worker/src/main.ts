@@ -1,6 +1,7 @@
 import { llmFromEnv, messageClassifier } from "@rebuttal/agent";
 import { defaultSources } from "@rebuttal/connectors";
 import { createDb } from "@rebuttal/db";
+import { launchPdfEngine } from "@rebuttal/evidence";
 import { assertSafeForProduction, createPayPalClient } from "@rebuttal/paypal";
 import { PgBoss } from "pg-boss";
 import { pino } from "pino";
@@ -31,6 +32,8 @@ async function main() {
       log,
       sources: defaultSources(process.env, { classifyMessages: messageClassifier(llm) }),
       llm,
+      // PACKS_DISABLED=1 skips PDF rendering (e.g. a worker image without Chromium).
+      pdfEngine: process.env["PACKS_DISABLED"] === "1" ? null : launchPdfEngine,
     }),
     {
       pollCron: process.env["POLL_DISABLED"] === "1" ? false : "* * * * *",

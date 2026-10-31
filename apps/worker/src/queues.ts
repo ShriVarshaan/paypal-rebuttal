@@ -12,6 +12,8 @@ export const QUEUES = {
   /** B: draft an appeal when a case is LOST (jobs/appeal.ts). */
   caseAppeal: "case.appeal",
   actionExecute: "action.execute",
+  /** C: render the PDF evidence pack for a FIGHT decision (jobs/pack.ts). */
+  packBuild: "pack.build",
   /** Sent by C's pack job when an EvidencePack is READY. */
   packReady: "pack.ready",
   slaFire: "sla.fire",
@@ -26,6 +28,7 @@ export const Payloads = {
   [QUEUES.caseTriage]: z.object({ caseId: z.string() }),
   [QUEUES.caseAppeal]: z.object({ caseId: z.string() }),
   [QUEUES.actionExecute]: z.object({ decisionId: z.string() }),
+  [QUEUES.packBuild]: z.object({ decisionId: z.string() }),
   [QUEUES.packReady]: z.object({ packId: z.string() }),
   [QUEUES.slaFire]: z.object({ slaJobId: z.string() }),
 } satisfies Record<QueueName, z.ZodType>;
@@ -57,6 +60,7 @@ export const QUEUE_CONFIG: Record<QueueName, QueueConfig> = {
     retryDelayMax: 300,
     expireInSeconds: 300,
   },
+  [QUEUES.packBuild]: { policy: "stately", retryLimit: 1, retryDelay: 15, expireInSeconds: 300 },
   [QUEUES.packReady]: { policy: "standard", retryLimit: 3 },
   [QUEUES.slaFire]: { policy: "standard", retryLimit: 5, retryDelay: 30 },
 };

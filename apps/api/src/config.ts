@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { findRepoRoot } from "@rebuttal/paypal";
 
 export interface ApiConfig {
   port: number;
@@ -32,6 +33,6 @@ export function apiConfigFromEnv(env: NodeJS.ProcessEnv = process.env): ApiConfi
     webhookId: env["PAYPAL_WEBHOOK_ID"] || undefined,
     skipWebhookVerify,
     production,
-    evidenceStorageDir: resolve(env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
+    evidenceStorageDir: resolve(findRepoRoot(), env["EVIDENCE_STORAGE_DIR"] ?? "storage/evidence"),
   };
 }

@@ -252,6 +252,9 @@ export async function triageCase(deps: Deps, caseId: string): Promise<TriageJobR
     return created;
   });
 
+  // C's pack job renders the PDF now, so the seller can preview it before approving.
+  if (d.option === "FIGHT")
+    await deps.queue.send(QUEUES.packBuild, { decisionId: decision.id }, { singletonKey: decision.id });
   if (autoApproved)
     await deps.queue.send(QUEUES.actionExecute, { decisionId: decision.id }, { singletonKey: decision.id });
   deps.log.info({ caseId, decisionId: decision.id, option: d.option, autoApproved, costUsd }, "case triaged");

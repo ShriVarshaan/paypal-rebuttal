@@ -47,16 +47,23 @@ function capturedMs(e: EvidenceLike): number {
   return Number.isNaN(c) ? 0 : c;
 }
 
+/** Connector lookup notes (e.g. "order could not be resolved") are not evidence. */
+export function isDiagnostic(e: EvidenceLike): boolean {
+  return typeof e.data["diagnostic"] === "string";
+}
+
 export function assignExhibits(items: readonly EvidenceLike[]): Exhibit[] {
-  const sorted = [...items].sort((a, b) => {
-    const ka = KIND_ORDER.indexOf(evidenceKind(a));
-    const kb = KIND_ORDER.indexOf(evidenceKind(b));
-    if (ka !== kb) return ka - kb;
-    const ca = capturedMs(a);
-    const cb = capturedMs(b);
-    if (ca !== cb) return ca - cb;
-    return (a.id ?? a.title ?? "").localeCompare(b.id ?? b.title ?? "");
-  });
+  const sorted = items
+    .filter((e) => !isDiagnostic(e))
+    .sort((a, b) => {
+      const ka = KIND_ORDER.indexOf(evidenceKind(a));
+      const kb = KIND_ORDER.indexOf(evidenceKind(b));
+      if (ka !== kb) return ka - kb;
+      const ca = capturedMs(a);
+      const cb = capturedMs(b);
+      if (ca !== cb) return ca - cb;
+      return (a.id ?? a.title ?? "").localeCompare(b.id ?? b.title ?? "");
+    });
   return sorted.map((e, i) => ({
     exhibitId: `EX-${i + 1}`,
     evidenceId: e.id ?? null,

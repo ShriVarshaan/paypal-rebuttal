@@ -2,16 +2,27 @@
   "name": "@rebuttal/evidence",
   "version": "0.0.0",
   "private": true,
-  "description": "PDF evidence pack generation. Owner: C.",
+  "description": "PDF evidence pack generation: React print templates, Playwright HTML→PDF, pdf-lib merge. Owner: C.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "preview": "tsx --env-file-if-exists=../../.env src/preview.ts"
   },
   "dependencies": {
-    "@rebuttal/core": "workspace:*"
+    "@rebuttal/core": "workspace:*",
+    "@rebuttal/db": "workspace:*",
+    "@rebuttal/paypal": "workspace:*",
+    "pdf-lib": "1.17.1",
+    "playwright": "1.51.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }

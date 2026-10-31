@@ -1,4 +1,11 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import type { NextConfig } from "next";
+
+// API_URL and API_TOKEN live in the root .env; server routes need them to reach the api.
+// Variables already set in the environment win.
+const rootEnv = resolve(import.meta.dirname, "../../.env");
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const nextConfig: NextConfig = {
   agentRules: false,

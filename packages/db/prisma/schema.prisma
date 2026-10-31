@@ -74,6 +74,8 @@ enum PackStatus {
   PENDING
   READY
   FAILED
+  /// A newer pack for the same decision replaced it (e.g. after a narrative edit).
+  SUPERSEDED
 
   @@schema("public")
 }
@@ -196,17 +198,24 @@ model EvidenceItem {
 }
 
 model EvidencePack {
-  id         String     @id @default(cuid())
-  caseId     String
-  case       Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  decisionId String?
-  decision   Decision?  @relation(fields: [decisionId], references: [id])
-  status     PackStatus @default(PENDING)
-  /// [{ path, name, mimeType, sizeBytes, evidenceType }]
-  files      Json
-  notes      String?
-  createdAt  DateTime   @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime   @updatedAt @db.Timestamptz(3)
+  id          String     @id @default(cuid())
+  caseId      String
+  case        Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  decisionId  String?
+  decision    Decision?  @relation(fields: [decisionId], references: [id])
+  status      PackStatus @default(PENDING)
+  /// Submission files, one per PayPal evidence_type: [{ path, name, mimeType, sizeBytes, evidenceType, exhibits, pages }]
+  files       Json
+  notes       String?
+  /// Cover letter + every exhibit in one PDF, for the browser preview. Never uploaded.
+  previewPath String?
+  totalBytes  Int?
+  /// [{ exhibitId, evidenceId, title, evidenceType }] in pack order.
+  exhibits    Json?
+  /// Why the build failed (status FAILED).
+  error       String?
+  createdAt   DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(3)
 
   @@index([decisionId])
   @@schema("public")

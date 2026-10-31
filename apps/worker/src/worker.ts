@@ -5,6 +5,7 @@ import { appealCase } from "./jobs/appeal.js";
 import { enrichCase } from "./jobs/enrich.js";
 import { executeDecision, onPackReady } from "./jobs/execute.js";
 import { gatherEvidence } from "./jobs/gather.js";
+import { buildPack } from "./jobs/pack.js";
 import { pollDisputes } from "./jobs/poll.js";
 import { fireSla } from "./jobs/sla.js";
 import { syncDispute } from "./jobs/sync.js";
@@ -17,7 +18,7 @@ export interface WorkerOptions {
   pollingIntervalSeconds?: number;
 }
 
-/** Registers every job handler: A's platform jobs and B's triage/appeal. C adds the pack job. */
+/** Registers every job handler: A's platform jobs, B's triage/appeal and C's pack job. */
 export async function startWorker(boss: PgBoss, deps: Deps, opts: WorkerOptions = {}): Promise<void> {
   await ensureQueues(boss);
 
@@ -68,6 +69,7 @@ export async function startWorker(boss: PgBoss, deps: Deps, opts: WorkerOptions 
   await handle(QUEUES.actionExecute, (d, job) =>
     executeDecision(deps, d.decisionId, { retryCount: job.retryCount, retryLimit: job.retryLimit }),
   );
+  await handle(QUEUES.packBuild, (d) => buildPack(deps, d.decisionId));
   await handle(QUEUES.packReady, (d) =>
     onPackReady(deps, d.packId, (decisionId) =>
       deps.queue.send(QUEUES.actionExecute, { decisionId }, { singletonKey: decisionId }),

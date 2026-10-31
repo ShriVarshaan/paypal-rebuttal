@@ -20,5 +20,13 @@ export const CaseEventType = z.enum([
   "DECISION_SUPERSEDED",
   "DECISION_EDITED",
   "APPEAL_DRAFTED",
+  // Added by C (product): evidence packs, seller decisions and buyer messages.
+  "PACK_READY",
+  "PACK_FAILED",
+  "DECISION_APPROVED",
+  "DECISION_REJECTED",
+  "DECISION_OVERRIDDEN",
+  "NARRATIVE_EDITED",
+  "MESSAGE_SENT",
 ]);
 export type CaseEventType = z.infer<typeof CaseEventType>;
