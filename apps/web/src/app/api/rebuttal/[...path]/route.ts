@@ -40,6 +40,9 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
 
   const search = new URL(request.url).search;
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const stream = path === "events/stream";
+  // EventSource sends Last-Event-ID when it reconnects; the api resumes from it.
+  const lastEventId = stream ? request.headers.get("last-event-id") : null;
   let upstream: Response;
   try {
     upstream = await apiFetch(`/${path}${search}`, {
@@ -47,7 +50,8 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
       signal: request.signal,
       headers: {
         ...(hasBody ? { "content-type": "application/json" } : {}),
-        ...(path === "events/stream" ? { accept: "text/event-stream" } : {}),
+        ...(stream ? { accept: "text/event-stream" } : {}),
+        ...(lastEventId ? { "last-event-id": lastEventId.slice(0, 200) } : {}),
       },
       ...(hasBody ? { body: (await request.text()) || "{}" } : {}),
     });
@@ -59,7 +63,7 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
     const value = upstream.headers.get(name);
     if (value) headers.set(name, value);
   }
-  if (path === "events/stream") {
+  if (stream) {
     headers.set("cache-control", "no-cache, no-transform");
     headers.set("x-accel-buffering", "no");
   }

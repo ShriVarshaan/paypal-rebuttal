@@ -65,12 +65,18 @@ export async function editDecision(deps: AppDeps, id: string, e: DecisionEdit): 
     note = defaultNote(d, option, offerType, offerAmountCents);
   }
   const override = option !== d.option;
+  // A FIGHT whose note changes gets a new PDF; the old one must not be filed meanwhile.
+  const rebuild = option === "FIGHT" && (override || !!note);
 
   const updated = await deps.db.$transaction(async (tx) => {
-    const u = await tx.decision.update({
-      where: { id },
+    // Re-check PROPOSED in the write itself: an approval that lands after the read above
+    // must not have its option or amount changed underneath it.
+    const changed = await tx.decision.updateMany({
+      where: { id, status: "PROPOSED" },
       data: { option, offerType, offerAmountCents, ...(note ? { note } : {}) },
     });
+    if (changed.count === 0) return null;
+    const u = await tx.decision.findUniqueOrThrow({ where: { id } });
     await tx.caseEvent.create({
       data: {
         caseId: d.caseId,
@@ -93,16 +99,27 @@ export async function editDecision(deps: AppDeps, id: string, e: DecisionEdit): 
           payload: json({ decisionId: id, by: e.by, reason: e.overrideReason, from: d.option, to: option }),
         },
       });
-    if (d.option === "FIGHT" && option !== "FIGHT")
-      await tx.evidencePack.updateMany({
-        where: { decisionId: id, status: { in: ["PENDING", "READY"] } },
-        data: { status: "SUPERSEDED" },
-      });
+    if ((d.option === "FIGHT" && option !== "FIGHT") || rebuild) await supersedePacks(tx, id);
     return u;
   });
-  if (option === "FIGHT" && (override || note))
-    await deps.queue.send(QUEUES.packBuild, { decisionId: id }, { singletonKey: id });
+  if (!updated) {
+    const now = await deps.db.decision.findUnique({ where: { id }, select: { status: true } });
+    return { ok: false, status: 409, error: `decision is ${now?.status ?? "gone"}` };
+  }
+  if (rebuild) await deps.queue.send(QUEUES.packBuild, { decisionId: id }, { singletonKey: id });
   return { ok: true, decision: updated };
+}
+
+/**
+ * Retire a decision's open packs. Called in the same transaction as any change that makes
+ * them stale, so the executor (which files the newest READY pack) can't pick one up while
+ * pack.build renders the replacement.
+ */
+export function supersedePacks(tx: Prisma.TransactionClient, decisionId: string) {
+  return tx.evidencePack.updateMany({
+    where: { decisionId, status: { in: ["PENDING", "READY"] } },
+    data: { status: "SUPERSEDED" },
+  });
 }
 
 function defaultNote(

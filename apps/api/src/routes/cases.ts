@@ -4,7 +4,8 @@ import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
 import { sendStoredFile } from "../files.js";
-import { caseRelations, detail, queueItem, type CaseWithRelations } from "../serializers.js";
+import type { Prisma } from "@rebuttal/db";
+import { caseRelations, detail, queueItem, queueRelations } from "../serializers.js";
 
 export function tokenMatches(header: string | undefined, token: string): boolean {
   const given = Buffer.from(header?.replace(/^Bearer\s+/i, "") ?? "");
@@ -33,11 +34,26 @@ const Query = z.object({
   dueWithinHours: z.coerce.number().int().min(1).max(8_760).optional(),
 });
 
+/** The columns the list filters and sorts on; relations load only for the page returned. */
+const listSelect = {
+  id: true,
+  paypalDisputeId: true,
+  sellerTransactionId: true,
+  disputedTransactions: true,
+  state: true,
+  sellerResponseDueAt: true,
+  amountCents: true,
+  currency: true,
+  createdAt: true,
+  decisions: { select: { status: true }, orderBy: { createdAt: "desc" as const } },
+} satisfies Prisma.CaseSelect;
+type ListRow = Prisma.CaseGetPayload<{ select: typeof listSelect }>;
+
 function transactionText(value: unknown): string {
   return JSON.stringify(value ?? "").toLowerCase();
 }
 
-function matchesSearch(row: CaseWithRelations, query: string): boolean {
+function matchesSearch(row: ListRow, query: string): boolean {
   const haystack = [
     row.id,
     row.paypalDisputeId,
@@ -49,22 +65,18 @@ function matchesSearch(row: CaseWithRelations, query: string): boolean {
   return haystack.includes(query.toLowerCase());
 }
 
-function awaitingApproval(row: CaseWithRelations): boolean {
+function awaitingApproval(row: ListRow): boolean {
   return (
     row.state === "AWAITING_APPROVAL" &&
     row.decisions.find((decision) => decision.status !== "REJECTED")?.status === "PROPOSED"
   );
 }
 
-function deadline(row: CaseWithRelations): number | null {
+function deadline(row: ListRow): number | null {
   return row.sellerResponseDueAt?.getTime() ?? null;
 }
 
-function compareRows(
-  left: CaseWithRelations,
-  right: CaseWithRelations,
-  sort: z.infer<typeof Query>["sort"],
-): number {
+function compareRows(left: ListRow, right: ListRow, sort: z.infer<typeof Query>["sort"]): number {
   if (sort.startsWith("dueAt")) {
     const a = deadline(left);
     const b = deadline(right);
@@ -116,14 +128,21 @@ export function caseRoutes(deps: AppDeps): FastifyPluginAsync {
       if (!parsed.success)
         return reply.code(400).send({ error: "invalid query", issues: parsed.error.issues });
       const q = parsed.data;
-      const rows = await deps.db.case.findMany({
-        where: {
-          ...(q.state ? { state: { in: q.state } } : {}),
-          ...(q.reason ? { reason: q.reason } : {}),
-        },
-        include: caseRelations,
-      });
       const now = Date.now();
+      const rows = await deps.db.case.findMany({
+        // The cheap column filters run in Postgres; the in-memory ones below stay authoritative.
+        where: {
+          AND: [
+            q.state ? { state: { in: q.state } } : {},
+            q.reason ? { reason: q.reason } : {},
+            q.needsApproval ? { state: "AWAITING_APPROVAL" as const } : {},
+            q.dueWithinHours
+              ? { sellerResponseDueAt: { lte: new Date(now + q.dueWithinHours * 60 * 60 * 1000) } }
+              : {},
+          ],
+        },
+        select: listSelect,
+      });
       const filtered = rows
         .filter((row) => !q.q || matchesSearch(row, q.q))
         .filter((row) => q.needsApproval === undefined || awaitingApproval(row) === q.needsApproval)
@@ -135,7 +154,13 @@ export function caseRoutes(deps: AppDeps): FastifyPluginAsync {
         })
         .sort((left, right) => compareRows(left, right, q.sort));
       reply.header("X-Total-Count", String(filtered.length));
-      return filtered.slice(q.skip, q.skip + q.take).map(queueItem);
+      const ids = filtered.slice(q.skip, q.skip + q.take).map((row) => row.id);
+      const page = await deps.db.case.findMany({ where: { id: { in: ids } }, include: queueRelations });
+      const byId = new Map(page.map((row) => [row.id, row]));
+      return ids.flatMap((id) => {
+        const row = byId.get(id);
+        return row ? [queueItem(row)] : [];
+      });
     });
 
     app.get("/cases/:id", async (req, reply) => {

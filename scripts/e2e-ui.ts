@@ -13,7 +13,7 @@ import type { Browser, Page } from "playwright";
 import { apiUrl, postSimWebhook } from "./lib.js";
 
 const root = findRepoRoot();
-const web = (process.env["WEB_URL"] ?? "http://127.0.0.1:3000").replace(/\/$/, "");
+const web = (process.env["WEB_URL"] || "http://127.0.0.1:3000").replace(/\/$/, "");
 const out = join(root, "storage", "test-output", "ui");
 const media = join(root, "docs", "media");
 const gallery = process.argv.includes("--screenshots");

@@ -228,6 +228,40 @@ describe("narrative edits", () => {
     expect(await events(c.id)).toEqual(["NARRATIVE_EDITED"]);
   });
 
+  it("retires the current PDF at once so an approval can't file the old statement", async () => {
+    const { c, d } = await seed();
+    const old = await db.evidencePack.create({
+      data: { caseId: c.id, decisionId: d.id, status: "READY", files: [] },
+    });
+    const r = await api.inject({
+      method: "PUT",
+      url: `/decisions/${d.id}/narrative`,
+      headers,
+      payload: { headline: "h", claims: [{ text: "Signed for.", exhibits: ["EX-1"] }] },
+    });
+    expect(r.statusCode).toBe(200);
+    expect((await db.evidencePack.findUniqueOrThrow({ where: { id: old.id } })).status).toBe("SUPERSEDED");
+    // Approving now waits for the rebuilt pack instead of filing the stale one.
+    sent.length = 0;
+    expect((await post(`/decisions/${d.id}/approve`)).statusCode).toBe(200);
+    expect(sent.map((s) => s.name)).toEqual(["pack.build", "action.execute"]);
+  });
+
+  it("refuses edits once the decision is approved", async () => {
+    const { d } = await seed();
+    await post(`/decisions/${d.id}/approve`);
+    const r = await api.inject({
+      method: "PUT",
+      url: `/decisions/${d.id}/narrative`,
+      headers,
+      payload: { headline: "h", claims: [{ text: "x", exhibits: ["EX-1"] }] },
+    });
+    expect(r.statusCode).toBe(409);
+    const o = await post(`/decisions/${d.id}/override`, { reason: "changed my mind", option: "ACCEPT" });
+    expect(o.statusCode).toBe(409);
+    expect((await db.decision.findUniqueOrThrow({ where: { id: d.id } })).option).toBe("FIGHT");
+  });
+
   it("refuses claims without citations or citing unknown exhibits", async () => {
     const { d } = await seed();
     const put = (claims: object[]) =>
@@ -366,5 +400,16 @@ describe("buyer messages", () => {
     expect(
       (await post(`/cases/${c.id}/messages`, { message: "", requestId: "draft-0002-abcd" })).statusCode,
     ).toBe(400);
+  });
+
+  it("refuses a used request id with different text instead of sending the old message", async () => {
+    const { c } = await seed();
+    await post(`/cases/${c.id}/messages`, { message: "Hi, delivered Oct 5.", requestId: "draft-0003-abcd" });
+    const edited = await post(`/cases/${c.id}/messages`, {
+      message: "Hi, it was delivered on Oct 5.",
+      requestId: "draft-0003-abcd",
+    });
+    expect(edited.statusCode).toBe(409);
+    expect(sent.map((s) => s.name)).toEqual(["message.send"]);
   });
 });

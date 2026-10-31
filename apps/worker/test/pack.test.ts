@@ -79,6 +79,32 @@ describe("pack.build", () => {
     expect(packs.map((p) => p.status)).toEqual(["SUPERSEDED", "READY"]);
   });
 
+  it("never revives a pack that was superseded while it rendered", async () => {
+    const { caseId, decisionId } = await fightDecision();
+    t.queue.sent.length = 0;
+    const base = engine();
+    let retired = false;
+    // A rejection or narrative edit lands mid-render and retires the PENDING pack.
+    t.deps.pdfEngine = async () => ({
+      ...base,
+      async pdf(html) {
+        if (!retired) {
+          retired = true;
+          await t.db.evidencePack.updateMany({ where: { decisionId }, data: { status: "SUPERSEDED" } });
+        }
+        return base.pdf(html);
+      },
+    });
+    expect(await buildPack(t.deps, decisionId)).toEqual({
+      status: "skipped",
+      reason: "superseded while rendering",
+    });
+    const pack = await t.db.evidencePack.findFirstOrThrow({ where: { decisionId } });
+    expect(pack.status).toBe("SUPERSEDED");
+    expect(await t.db.caseEvent.count({ where: { caseId, type: "PACK_READY" } })).toBe(0);
+    expect(t.queue.take(QUEUES.packReady)).toEqual([]);
+  });
+
   it("records a failure the seller can see instead of retrying forever", async () => {
     const { caseId, decisionId } = await fightDecision();
     t.deps.pdfEngine = async () => {

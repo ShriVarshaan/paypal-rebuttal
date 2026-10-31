@@ -6,7 +6,7 @@ import { QUEUES } from "@rebuttal/worker";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
-import { citableExhibits, editDecision } from "../decision-edits.js";
+import { citableExhibits, editDecision, supersedePacks } from "../decision-edits.js";
 import { sendStoredFile } from "../files.js";
 import { tokenMatches } from "./cases.js";
 
@@ -72,24 +72,23 @@ export function decisionRoutes(deps: AppDeps): FastifyPluginAsync {
       const d = await deps.db.decision.findUnique({ where: { id } });
       if (!d) return reply.code(404).send({ error: "not found" });
       if (d.status !== "PROPOSED") return reply.code(409).send({ error: `decision is ${d.status}` });
-      const [updated] = await deps.db.$transaction([
-        deps.db.decision.update({
-          where: { id },
+      const updated = await deps.db.$transaction(async (tx) => {
+        const changed = await tx.decision.updateMany({
+          where: { id, status: "PROPOSED" },
           data: { status: "REJECTED", reason: "REJECTED_BY_SELLER" },
-        }),
-        deps.db.evidencePack.updateMany({
-          where: { decisionId: id, status: { in: ["PENDING", "READY"] } },
-          data: { status: "SUPERSEDED" },
-        }),
-        deps.db.caseEvent.create({
+        });
+        if (changed.count === 0) return null;
+        await supersedePacks(tx, id);
+        await tx.caseEvent.create({
           data: {
             caseId: d.caseId,
             type: "DECISION_REJECTED",
             payload: json({ decisionId: id, by: body.data.by, reason: body.data.reason, option: d.option }),
           },
-        }),
-      ]);
-      return updated;
+        });
+        return tx.decision.findUniqueOrThrow({ where: { id } });
+      });
+      return updated ?? reply.code(409).send({ error: "the decision changed; reload and try again" });
     });
 
     app.post("/decisions/:id/override", async (req, reply) => {
@@ -150,7 +149,15 @@ export function decisionRoutes(deps: AppDeps): FastifyPluginAsync {
       });
       const note = narrativeToNote(narrative);
       const updated = await deps.db.$transaction(async (tx) => {
-        const u = await tx.decision.update({ where: { id }, data: { narrative: json(narrative), note } });
+        // Guarded write: an approval since the read above wins, and the filed statement stays.
+        const changed = await tx.decision.updateMany({
+          where: { id, status: "PROPOSED", option: "FIGHT" },
+          data: { narrative: json(narrative), note },
+        });
+        if (changed.count === 0) return null;
+        // The current PDF quotes the old statement; retire it until pack.build renders the new one.
+        await supersedePacks(tx, id);
+        const u = await tx.decision.findUniqueOrThrow({ where: { id } });
         await tx.caseEvent.create({
           data: {
             caseId: d.caseId,
@@ -160,6 +167,7 @@ export function decisionRoutes(deps: AppDeps): FastifyPluginAsync {
         });
         return u;
       });
+      if (!updated) return reply.code(409).send({ error: "the decision changed; reload and try again" });
       await deps.queue.send(QUEUES.packBuild, { decisionId: id }, { singletonKey: id });
       return updated;
     });
@@ -222,6 +230,11 @@ export function decisionRoutes(deps: AppDeps): FastifyPluginAsync {
         },
         update: {},
       });
+      // A retry must be the same message; different text under a used id would be dropped.
+      if ((action.request as { message?: unknown } | null)?.message !== body.data.message)
+        return reply.code(409).send({ error: "this request id was already used for a different message" });
+      if (action.status === "FAILED")
+        return reply.code(409).send({ error: "this message already failed; send it again as a new message" });
       await deps.queue.send(QUEUES.messageSend, { actionId: action.id }, { singletonKey: action.id });
       return reply.code(202).send({ actionId: action.id, status: action.status });
     });

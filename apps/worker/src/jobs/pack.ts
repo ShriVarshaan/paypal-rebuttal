@@ -50,9 +50,11 @@ export async function buildPack(deps: Deps, decisionId: string): Promise<PackJob
       outDir: join(deps.evidenceStorageDir, decision.caseId, "packs", pack.id),
       readFile: deps.readFile,
     });
-    await deps.db.$transaction([
-      deps.db.evidencePack.update({
-        where: { id: pack.id },
+    const ready = await deps.db.$transaction(async (tx) => {
+      // Only a pack still PENDING may become READY: a rejection, override or narrative edit
+      // during the render superseded it, and a stale PDF must never come back to life.
+      const marked = await tx.evidencePack.updateMany({
+        where: { id: pack.id, status: "PENDING" },
         data: {
           status: "READY",
           files: json(result.files),
@@ -61,8 +63,9 @@ export async function buildPack(deps: Deps, decisionId: string): Promise<PackJob
           exhibits: json(result.exhibits),
           notes: result.warnings.length ? result.warnings.join("\n") : null,
         },
-      }),
-      deps.db.caseEvent.create({
+      });
+      if (marked.count === 0) return false;
+      await tx.caseEvent.create({
         data: {
           caseId: decision.caseId,
           type: "PACK_READY",
@@ -76,8 +79,10 @@ export async function buildPack(deps: Deps, decisionId: string): Promise<PackJob
             warnings: result.warnings,
           }),
         },
-      }),
-    ]);
+      });
+      return true;
+    });
+    if (!ready) return { status: "skipped", reason: "superseded while rendering" };
     await deps.queue.send(QUEUES.packReady, { packId: pack.id });
     deps.log.info(
       { caseId: decision.caseId, packId: pack.id, bytes: result.totalBytes },
@@ -99,24 +104,31 @@ async function fail(
   err: unknown,
 ): Promise<PackJobResult> {
   const error = err instanceof Error ? err.message : String(err);
-  await deps.db.$transaction([
-    deps.db.evidencePack.update({ where: { id: packId }, data: { status: "FAILED", error } }),
-    deps.db.caseEvent.create({
+  const recorded = await deps.db.$transaction(async (tx) => {
+    // A pack superseded mid-render has a replacement coming; its failure needs no alert.
+    const marked = await tx.evidencePack.updateMany({
+      where: { id: packId, status: "PENDING" },
+      data: { status: "FAILED", error },
+    });
+    if (marked.count === 0) return false;
+    await tx.caseEvent.create({
       data: {
         caseId,
         type: "PACK_FAILED",
         payload: json({ packId, error, tooLarge: err instanceof PackTooLargeError }),
       },
-    }),
-    deps.db.notification.create({
+    });
+    await tx.notification.create({
       data: {
         caseId,
         kind: "PACK_FAILED",
         level: "warning",
         message: `${disputeId}: the evidence PDF could not be built (${error}). Rebuild it from the case page.`,
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!recorded) return { status: "skipped", reason: "superseded while rendering" };
   deps.log.warn({ caseId, packId, error }, "evidence pack failed");
   return { status: "failed", packId, error };
 }

@@ -15,15 +15,21 @@ import {
 import { matrixContext } from "@rebuttal/decision";
 import type { Prisma } from "@rebuttal/db";
 
-export const caseRelations = {
+/** What a queue row needs: the latest decision and the evidence for completeness. */
+export const queueRelations = {
   decisions: { orderBy: { createdAt: "desc" as const } },
   evidence: { orderBy: { capturedAt: "asc" as const } },
+} as const;
+
+export const caseRelations = {
+  ...queueRelations,
   events: { orderBy: { createdAt: "asc" as const } },
   actions: { orderBy: { createdAt: "asc" as const } },
   packs: { orderBy: { createdAt: "desc" as const } },
 } as const;
 
 export type CaseWithRelations = Prisma.CaseGetPayload<{ include: typeof caseRelations }>;
+export type QueueRow = Prisma.CaseGetPayload<{ include: typeof queueRelations }>;
 
 function parsedTransactions(value: unknown) {
   const result = DisputedTransaction.array().safeParse(value);
@@ -67,7 +73,7 @@ function buyerPseudonym(transactions: ReturnType<typeof parsedTransactions>): st
   return `Buyer ${first[0] ?? "?"}•••${last.at(-1) ?? "?"}`;
 }
 
-function decisionSummary(row: CaseWithRelations) {
+function decisionSummary(row: QueueRow) {
   const decision = row.decisions.find((value) => value.status !== "REJECTED");
   return decision
     ? {
@@ -81,7 +87,7 @@ function decisionSummary(row: CaseWithRelations) {
     : null;
 }
 
-export function queueItem(row: CaseWithRelations) {
+export function queueItem(row: QueueRow) {
   const transactions = parsedTransactions(row.disputedTransactions);
   const transactionContext = parsedContext(row.transactionContext);
   const evidence = row.evidence.map(evidenceRecord);

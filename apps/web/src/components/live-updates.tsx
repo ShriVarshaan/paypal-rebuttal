@@ -63,7 +63,16 @@ export function LiveUpdates({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const source = new EventSource("/api/rebuttal/events/stream");
-    source.addEventListener("ready", () => setStatus("live"));
+    let connectedBefore = false;
+    source.addEventListener("ready", () => {
+      setStatus("live");
+      // After a reconnect, refetch once: the stream resumes from the last event id, and this
+      // also covers a resume the browser could not make (e.g. the api restarted).
+      if (connectedBefore)
+        for (const key of ["cases", "case", "metrics", "notifications"])
+          void queryClient.invalidateQueries({ queryKey: [key] });
+      connectedBefore = true;
+    });
     source.onerror = () => setStatus(source.readyState === EventSource.CLOSED ? "offline" : "connecting");
     source.addEventListener("case", (e) => {
       let m: CaseEventMessage;

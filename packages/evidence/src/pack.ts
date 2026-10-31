@@ -69,6 +69,8 @@ export async function buildEvidencePack(input: PackInput, opts: BuildPackOptions
   }
 
   let lastSizes = "";
+  // The cover and image-free exhibits look the same at every profile; render them once.
+  const fixed = new Map<string, Uint8Array>();
   for (const profile of PROFILES) {
     const images = new Map<string, string>();
     if (profile.maxWidth > 0) {
@@ -77,7 +79,7 @@ export async function buildEvidencePack(input: PackInput, opts: BuildPackOptions
         images.set(id, `data:image/jpeg;base64,${Buffer.from(jpeg).toString("base64")}`);
       }
     }
-    const rendered = await render(input, exhibits, timeline, images, opts.engine);
+    const rendered = await render(input, exhibits, timeline, images, opts.engine, fixed);
     const total = rendered.files.reduce((s, f) => s + f.bytes.byteLength, 0);
     const oversized = rendered.files.filter((f) => f.bytes.byteLength > maxFile);
     lastSizes = rendered.files
@@ -104,17 +106,27 @@ async function render(
   timeline: ReturnType<typeof buildTimeline>,
   images: Map<string, string>,
   engine: PdfEngine,
+  fixed: Map<string, Uint8Array>,
 ): Promise<Rendered> {
+  const once = async (key: string, html: () => string) => {
+    let bytes = fixed.get(key);
+    if (!bytes) fixed.set(key, (bytes = await engine.pdf(html())));
+    return bytes;
+  };
   const cover: Section = {
     label: "Cover letter",
-    bytes: await engine.pdf(renderCoverHtml(input, exhibits, timeline)),
+    bytes: await once("cover", () => renderCoverHtml(input, exhibits, timeline)),
   };
   const sections = new Map<string, Section>();
-  for (const x of exhibits)
+  for (const x of exhibits) {
+    const image = images.get(x.evidence.id) ?? null;
     sections.set(x.exhibitId, {
       label: `Exhibit ${x.exhibitId}`,
-      bytes: await engine.pdf(renderExhibitHtml(x, input, images.get(x.evidence.id) ?? null)),
+      bytes: image
+        ? await engine.pdf(renderExhibitHtml(x, input, image))
+        : await once(x.exhibitId, () => renderExhibitHtml(x, input, null)),
     });
+  }
 
   const groups = groupByEvidenceType(exhibits);
   const files: Rendered["files"] = [];

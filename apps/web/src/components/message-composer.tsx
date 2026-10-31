@@ -28,6 +28,12 @@ export function MessageComposer({ value }: { value: CaseDetail }) {
   const [confirm, setConfirm] = useState(false);
   const queryClient = useQueryClient();
   const toast = useToast();
+  // Different text is a different message, so it gets its own request id; only resending
+  // the same text (a retry) reuses one.
+  const edit = (next: string) => {
+    setText(next);
+    setRequestId(newRequestId());
+  };
   const resolved = value.status === "RESOLVED";
   const inFlight = value.actions.some(
     (a) => a.kind === "SEND_MESSAGE" && (a.status === "PENDING" || a.status === "IN_FLIGHT"),
@@ -37,7 +43,7 @@ export function MessageComposer({ value }: { value: CaseDetail }) {
     mutationFn: async () =>
       BuyerMessageDraft.parse(await apiSend("POST", `cases/${encodeURIComponent(value.id)}/buyer-message`)),
     onSuccess: (d) => {
-      setText(d.message);
+      edit(d.message);
       setSource(d.source);
     },
     onError: (e) => toast({ tone: "danger", title: "Could not draft a message", body: e.message }),
@@ -55,9 +61,8 @@ export function MessageComposer({ value }: { value: CaseDetail }) {
         title: "Message queued",
         body: "It appears in the timeline once PayPal accepts it.",
       });
-      setText("");
+      edit("");
       setSource(null);
-      setRequestId(newRequestId());
       setConfirm(false);
       void queryClient.invalidateQueries({ queryKey: ["case", value.id] });
     },
@@ -77,7 +82,7 @@ export function MessageComposer({ value }: { value: CaseDetail }) {
             aria-label="Message to the buyer"
             className="mt-2"
             maxLength={2000}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => edit(e.target.value)}
             placeholder="Write to the buyer, or let Rebuttal draft a message for the current recommendation."
             value={text}
           />
