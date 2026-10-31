@@ -2,7 +2,6 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import {
-  BellIcon,
   ChevronRightIcon,
   Cross2Icon,
   DashboardIcon,
@@ -17,14 +16,19 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { MerchantSummary } from "@rebuttal/core";
+import { useQuery } from "@tanstack/react-query";
+import { useLiveStatus } from "@/components/live-updates";
+import { NotificationsBell } from "@/components/notifications";
 import { Button } from "@/components/ui/button";
+import { apiGet } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/queue", label: "Queue", icon: RowsIcon, available: true },
-  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon, available: false },
-  { href: "/eval", label: "Eval", icon: ReaderIcon, available: false },
-  { href: "/settings", label: "Settings", icon: GearIcon, available: false },
+  { href: "/dashboard", label: "Dashboard", icon: DashboardIcon, available: true },
+  { href: "/eval", label: "Eval", icon: ReaderIcon, available: true },
+  { href: "/settings", label: "Settings", icon: GearIcon, available: true },
 ] as const;
 
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
@@ -32,7 +36,10 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="Primary navigation" className="mt-8 space-y-1">
       {navItems.map((item) => {
-        const active = pathname === item.href || (item.href === "/queue" && pathname.startsWith("/cases/"));
+        const active =
+          pathname === item.href ||
+          pathname.startsWith(`${item.href}/`) ||
+          (item.href === "/queue" && pathname.startsWith("/cases/"));
         const Icon = item.icon;
         return (
           <Link
@@ -76,11 +83,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <Navigation onNavigate={onNavigate} />
       </div>
       <div className="mt-auto border-t border-border pt-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.055em] text-muted">Environment</p>
-        <div className="mt-2 flex items-center gap-2 text-xs text-foreground">
-          <span aria-hidden className="size-2 rounded-full bg-success" />
-          Simulator · local
-        </div>
+        <p className="text-[10px] font-bold uppercase tracking-[0.055em] text-muted">Updates</p>
+        <LiveIndicator />
+        <Link
+          className="mt-3 block text-xs font-semibold text-accent-strong hover:underline"
+          href="/onboarding"
+          onClick={onNavigate}
+        >
+          Connections &amp; setup
+        </Link>
       </div>
     </div>
   );
@@ -132,20 +143,39 @@ function MobileNavigation() {
   );
 }
 
-function Notifications() {
+function LiveIndicator() {
+  const status = useLiveStatus();
   return (
-    <details className="group relative">
-      <summary className="flex size-11 cursor-pointer list-none items-center justify-center rounded-[6px] border border-border bg-surface text-foreground outline-none transition-colors hover:border-border-strong hover:bg-surface-subdued focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas [&::-webkit-details-marker]:hidden">
-        <BellIcon aria-hidden />
-        <span className="sr-only">Notifications</span>
-      </summary>
-      <div className="surface-shadow absolute right-0 top-12 z-40 w-[min(320px,calc(100vw-32px))] rounded-[8px] border border-border bg-surface p-4">
-        <p className="text-sm font-semibold text-foreground-strong">Notifications</p>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          No new notifications. Deadline alerts will appear here.
-        </p>
-      </div>
-    </details>
+    <div className="mt-2 flex items-center gap-2 text-xs text-foreground" role="status">
+      <span
+        aria-hidden
+        className={cn(
+          "size-2 rounded-full",
+          status === "live" ? "bg-success" : status === "connecting" ? "bg-warning" : "bg-danger",
+        )}
+      />
+      {status === "live" ? "Live" : status === "connecting" ? "Connecting…" : "Offline · polling"}
+    </div>
+  );
+}
+
+function MerchantName() {
+  const query = useQuery({
+    queryKey: ["merchant"],
+    queryFn: () => apiGet("merchant", MerchantSummary),
+    staleTime: 5 * 60_000,
+  });
+  return (
+    <div>
+      <p className="text-sm font-semibold text-foreground-strong">{query.data?.name ?? " "}</p>
+      <p className="hidden text-xs text-muted sm:block">
+        {query.data
+          ? `PayPal sandbox · ${query.data.defaultCurrency}`
+          : query.error
+            ? "Merchant unavailable"
+            : " "}
+      </p>
+    </div>
   );
 }
 
@@ -159,20 +189,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-canvas/95 px-4 backdrop-blur-sm md:px-8">
           <div className="flex items-center gap-3">
             <MobileNavigation />
-            <div>
-              <p className="text-sm font-semibold text-foreground-strong">Fern &amp; Field Goods</p>
-              <p className="hidden text-xs text-muted sm:block">Default merchant · USD</p>
-            </div>
+            <MerchantName />
           </div>
           <div className="flex items-center gap-2">
-            <Notifications />
+            <NotificationsBell />
             <ThemeButton />
-            <Button className="hidden lg:inline-flex" variant="ghost">
-              Command
-              <span className="mono rounded-[4px] border border-border bg-surface-subdued px-1.5 py-0.5 text-[10px] text-muted">
-                /
-              </span>
-            </Button>
           </div>
         </header>
         <main className="px-4 py-7 md:px-8 md:py-8">{children}</main>

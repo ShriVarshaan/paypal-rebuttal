@@ -121,7 +121,8 @@ export function QueueScaffold() {
     queryKey: ["cases", params],
     queryFn: () => fetchCases(params),
     placeholderData: (previous) => previous,
-    refetchInterval: 10_000,
+    // The event stream refreshes the queue on every change; polling is the backstop.
+    refetchInterval: 30_000,
     refetchIntervalInBackground: false,
   });
 
@@ -206,9 +207,7 @@ export function QueueScaffold() {
     <div>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.055em] text-accent-strong">
-            Week 1 workspace
-          </p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.055em] text-accent-strong">Workspace</p>
           <h1 className="mt-2 text-[28px] font-semibold leading-[34px] tracking-[-0.025em] text-foreground-strong">
             Dispute queue
           </h1>
