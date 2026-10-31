@@ -10,6 +10,7 @@ import { caseRoutes } from "./routes/cases.js";
 import { decisionRoutes } from "./routes/decisions.js";
 import { healthRoutes } from "./routes/health.js";
 import { intelligenceRoutes } from "./routes/intelligence.js";
+import { metricsRoutes } from "./routes/metrics.js";
 import { streamRoutes } from "./routes/stream.js";
 import { webhookRoutes } from "./routes/webhooks.js";
 
@@ -45,5 +46,6 @@ export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): 
   await app.register(intelligenceRoutes(deps));
   await app.register(decisionRoutes(deps));
   await app.register(streamRoutes(deps));
+  await app.register(metricsRoutes(deps));
   return app;
 }

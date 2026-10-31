@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ChartTooltip, useChartTooltip } from "./tooltip";
@@ -16,7 +17,17 @@ export interface EvBar {
  * best option is emphasised in the accent and the others stay neutral (no extra hues). Bars
  * grow from a shared zero baseline, so a negative EV extends left and reads as a loss.
  */
-export function EvBars({ bars, best, currency }: { bars: EvBar[]; best: string; currency: string }) {
+export function EvBars({
+  bars,
+  best,
+  currency,
+  labelWidth = 88,
+}: {
+  bars: EvBar[];
+  best: string;
+  currency: string;
+  labelWidth?: number;
+}) {
   const { tip, show, hide } = useChartTooltip();
   const values = bars.map((b) => b.cents);
   const min = Math.min(0, ...values);
@@ -41,12 +52,13 @@ export function EvBars({ bars, best, currency }: { bars: EvBar[]; best: string; 
           return (
             <div
               aria-label={`${bar.label}: expected value ${value}${isBest ? ", highest" : ""}`}
-              className="grid grid-cols-[88px_minmax(0,1fr)_88px] items-center gap-3 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="grid grid-cols-[var(--label-w)_minmax(0,1fr)_88px] items-center gap-3 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-accent"
               key={bar.key}
               onBlur={hide}
               onFocus={(e) => show(e, content)}
               onPointerMove={(e) => show(e, content)}
               role="img"
+              style={{ "--label-w": `${labelWidth}px` } as React.CSSProperties}
               tabIndex={0}
             >
               <span className={cn("text-sm", isBest ? "font-semibold text-foreground-strong" : "text-muted")}>

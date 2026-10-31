@@ -87,10 +87,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-button,
-input,
-select {
-  font: inherit;
+/* In @layer base so Tailwind utilities (text-xs on a button) still win: unlayered rules beat layers. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 ::selection {
