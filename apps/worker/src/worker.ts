@@ -5,6 +5,7 @@ import { appealCase } from "./jobs/appeal.js";
 import { enrichCase } from "./jobs/enrich.js";
 import { executeDecision, onPackReady } from "./jobs/execute.js";
 import { gatherEvidence } from "./jobs/gather.js";
+import { sendBuyerMessage } from "./jobs/message.js";
 import { buildPack } from "./jobs/pack.js";
 import { pollDisputes } from "./jobs/poll.js";
 import { fireSla } from "./jobs/sla.js";
@@ -70,6 +71,9 @@ export async function startWorker(boss: PgBoss, deps: Deps, opts: WorkerOptions 
     executeDecision(deps, d.decisionId, { retryCount: job.retryCount, retryLimit: job.retryLimit }),
   );
   await handle(QUEUES.packBuild, (d) => buildPack(deps, d.decisionId));
+  await handle(QUEUES.messageSend, (d, job) =>
+    sendBuyerMessage(deps, d.actionId, { retryCount: job.retryCount, retryLimit: job.retryLimit }),
+  );
   await handle(QUEUES.packReady, (d) =>
     onPackReady(deps, d.packId, (decisionId) =>
       deps.queue.send(QUEUES.actionExecute, { decisionId }, { singletonKey: decisionId }),

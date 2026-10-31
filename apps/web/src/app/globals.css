@@ -15,6 +15,7 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
@@ -38,6 +39,7 @@
   --accent: #1f766b;
   --accent-strong: #155f56;
   --accent-soft: #e2f0ed;
+  --accent-foreground: #ffffff;
   --danger: #a33d36;
   --danger-soft: #f8e9e7;
   --warning: #90651b;
@@ -59,6 +61,8 @@
   --accent: #72b6aa;
   --accent-strong: #91c8bf;
   --accent-soft: #203c37;
+  /* The dark accent is light, so text on it must be dark to stay above 4.5:1. */
+  --accent-foreground: #0f1f1c;
   --danger: #e09a93;
   --danger-soft: #3c2624;
   --warning: #dfbd78;

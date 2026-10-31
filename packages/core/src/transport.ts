@@ -75,8 +75,42 @@ export const ActionSummary = z.object({
   status: z.string(),
   completedAt: IsoDateTime.nullable(),
   debugId: z.string().nullable(),
+  /** Added by C (Day 11): when it started, its decision and PayPal's error message, if any. */
+  decisionId: z.string().nullable().default(null),
+  createdAt: IsoDateTime.nullable().default(null),
+  attempts: z.number().int().nonnegative().default(0),
+  errorMessage: z.string().nullable().default(null),
 });
 export type ActionSummary = z.infer<typeof ActionSummary>;
+
+export const PackStatus = z.enum(["PENDING", "READY", "FAILED", "SUPERSEDED"]);
+export type PackStatus = z.infer<typeof PackStatus>;
+
+/** The newest PDF evidence pack for the current decision (C, Days 9–11). Paths stay server-side. */
+export const PackSummary = z.object({
+  id: z.string(),
+  decisionId: z.string().nullable(),
+  status: PackStatus,
+  totalBytes: z.number().int().nullable(),
+  files: z.array(
+    z.object({
+      name: z.string(),
+      evidenceType: z.string(),
+      sizeBytes: z.number().int(),
+      pages: z.number().int().nullable(),
+      exhibits: z.array(z.string()),
+    }),
+  ),
+  exhibits: z.array(
+    z.object({ exhibitId: z.string(), evidenceId: z.string(), title: z.string(), evidenceType: z.string() }),
+  ),
+  hasPreview: z.boolean(),
+  warnings: z.array(z.string()),
+  error: z.string().nullable(),
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
+});
+export type PackSummary = z.infer<typeof PackSummary>;
 
 export const CaseQueueItem = z.object({
   id: z.string(),
@@ -114,5 +148,6 @@ export const CaseDetail = CaseQueueItem.extend({
   decisions: z.array(DecisionRecord),
   checklist: EvidenceChecklist,
   actions: z.array(ActionSummary),
+  pack: PackSummary.nullable().default(null),
 });
 export type CaseDetail = z.infer<typeof CaseDetail>;

@@ -253,14 +253,18 @@ describe("REST routes", () => {
     });
     expect(first.statusCode).toBe(200);
     expect(first.json()).toMatchObject({ status: "APPROVED", approvedBy: "noah" });
-    expect(sent).toEqual([{ name: "action.execute", data: { decisionId: d.id } }]);
+    // A FIGHT with no PDF yet also gets a pack build; the executor waits for it.
+    expect(sent).toEqual([
+      { name: "pack.build", data: { decisionId: d.id } },
+      { name: "action.execute", data: { decisionId: d.id } },
+    ]);
     expect((await a.inject({ method: "POST", url: `/decisions/${d.id}/approve`, headers })).statusCode).toBe(
       409,
     );
     expect((await a.inject({ method: "POST", url: `/decisions/nope/approve`, headers })).statusCode).toBe(
       404,
     );
-    expect(sent).toHaveLength(1);
+    expect(sent).toHaveLength(2);
   });
 
   it("locks CORS to the web origin", async () => {

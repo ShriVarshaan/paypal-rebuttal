@@ -6,6 +6,7 @@ import {
   DisputeMessage,
   DisputedTransaction,
   EvidenceRecord,
+  PackSummary,
   TransactionContext,
   assessCompleteness,
   assignExhibits,
@@ -19,6 +20,7 @@ export const caseRelations = {
   evidence: { orderBy: { capturedAt: "asc" as const } },
   events: { orderBy: { createdAt: "asc" as const } },
   actions: { orderBy: { createdAt: "asc" as const } },
+  packs: { orderBy: { createdAt: "desc" as const } },
 } as const;
 
 export type CaseWithRelations = Prisma.CaseGetPayload<{ include: typeof caseRelations }>;
@@ -201,18 +203,62 @@ export function detail(row: CaseWithRelations) {
         }),
       })),
     },
-    actions: row.actions.map((action) =>
-      ActionSummary.parse({
+    actions: row.actions.map((action) => {
+      const response = record(action.response);
+      const error = record(action.error);
+      const debugId = response?.["debug_id"] ?? error?.["debugId"] ?? null;
+      return ActionSummary.parse({
         id: action.id,
         kind: action.kind,
         status: action.status,
         completedAt: action.completedAt?.toISOString() ?? null,
-        debugId:
-          typeof action.response === "object" && action.response !== null && "debug_id" in action.response
-            ? String((action.response as Record<string, unknown>)["debug_id"])
-            : null,
-      }),
-    ),
+        debugId: typeof debugId === "string" ? debugId : null,
+        decisionId: action.decisionId,
+        createdAt: action.createdAt.toISOString(),
+        attempts: action.attempts,
+        errorMessage: typeof error?.["message"] === "string" ? error["message"] : null,
+      });
+    }),
+    pack: packSummary(row),
+  });
+}
+
+const record = (v: unknown): Record<string, unknown> | null =>
+  typeof v === "object" && v !== null && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+
+/** The newest non-superseded pack of the current decision; falls back to the newest pack. */
+export function packSummary(row: CaseWithRelations) {
+  const decision = row.decisions.find((d) => d.status !== "REJECTED");
+  const pack =
+    row.packs.find((p) => p.decisionId === decision?.id && p.status !== "SUPERSEDED") ??
+    row.packs.find((p) => p.decisionId === decision?.id) ??
+    null;
+  if (!pack) return null;
+  const files = Array.isArray(pack.files) ? (pack.files as Record<string, unknown>[]) : [];
+  const exhibits = Array.isArray(pack.exhibits) ? (pack.exhibits as Record<string, unknown>[]) : [];
+  return PackSummary.parse({
+    id: pack.id,
+    decisionId: pack.decisionId,
+    status: pack.status,
+    totalBytes: pack.totalBytes,
+    files: files.map((f) => ({
+      name: String(f["name"] ?? ""),
+      evidenceType: String(f["evidenceType"] ?? "OTHER"),
+      sizeBytes: Number(f["sizeBytes"] ?? 0),
+      pages: typeof f["pages"] === "number" ? f["pages"] : null,
+      exhibits: Array.isArray(f["exhibits"]) ? f["exhibits"].map(String) : [],
+    })),
+    exhibits: exhibits.map((x) => ({
+      exhibitId: String(x["exhibitId"]),
+      evidenceId: String(x["evidenceId"]),
+      title: String(x["title"]),
+      evidenceType: String(x["evidenceType"]),
+    })),
+    hasPreview: Boolean(pack.previewPath),
+    warnings: pack.notes ? pack.notes.split(/\r?\n/).filter(Boolean) : [],
+    error: pack.error,
+    createdAt: pack.createdAt.toISOString(),
+    updatedAt: pack.updatedAt.toISOString(),
   });
 }
 

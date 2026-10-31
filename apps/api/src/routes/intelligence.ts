@@ -5,6 +5,7 @@ import { agentCase, POLICY_ID, QUEUES } from "@rebuttal/worker";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
+import { editDecision } from "../decision-edits.js";
 import { tokenMatches } from "./cases.js";
 
 /**
@@ -112,48 +113,9 @@ export function intelligenceRoutes(deps: AppDeps): FastifyPluginAsync {
         })
         .safeParse(req.body ?? {});
       if (!body.success) return reply.code(400).send({ error: "invalid edit", issues: body.error.issues });
-      const d = await deps.db.decision.findUnique({ where: { id }, include: { case: true } });
-      if (!d) return reply.code(404).send({ error: "not found" });
-      if (d.status !== "PROPOSED") return reply.code(409).send({ error: `decision is ${d.status}` });
-
       const e = body.data;
-      const option = e.option ?? d.option;
-      const offerType = option === "OFFER" ? (e.offerType ?? d.offerType ?? "REFUND") : null;
-      const offerAmountCents =
-        option === "OFFER" && offerType !== "REPLACEMENT_WITHOUT_REFUND"
-          ? (e.offerAmountCents ?? d.offerAmountCents)
-          : null;
-      if (option === "OFFER" && offerType !== "REPLACEMENT_WITHOUT_REFUND") {
-        if (offerAmountCents == null)
-          return reply.code(400).send({ error: "an offer needs offerAmountCents" });
-        if (offerAmountCents > d.case.amountCents)
-          return reply.code(400).send({ error: "offer exceeds the disputed amount" });
-      }
-      if (option !== d.option && !e.note)
-        return reply.code(400).send({ error: "changing the option needs a new note for PayPal" });
-
-      const updated = await deps.db.$transaction(async (tx) => {
-        const u = await tx.decision.update({
-          where: { id },
-          data: { option, offerType, offerAmountCents, ...(e.note ? { note: e.note } : {}) },
-        });
-        await tx.caseEvent.create({
-          data: {
-            caseId: d.caseId,
-            type: "DECISION_EDITED",
-            payload: {
-              decisionId: id,
-              editedBy: e.editedBy,
-              from: { option: d.option, offerType: d.offerType, offerAmountCents: d.offerAmountCents },
-              to: { option, offerType, offerAmountCents },
-              override: option !== d.option,
-              noteChanged: !!e.note,
-            },
-          },
-        });
-        return u;
-      });
-      return updated;
+      const r = await editDecision(deps, id, { ...e, by: e.editedBy });
+      return r.ok ? r.decision : reply.code(r.status).send({ error: r.error });
     });
 
     app.post("/cases/:id/buyer-message", async (req, reply) => {

@@ -1,12 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
-import { createReadStream } from "node:fs";
-import { realpath, stat } from "node:fs/promises";
-import { isAbsolute, relative, resolve } from "node:path";
 import { TERMINAL_STATES, CaseState, MerchantSummary } from "@rebuttal/core";
-import { QUEUES } from "@rebuttal/worker";
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { AppDeps } from "../app.js";
+import { sendStoredFile } from "../files.js";
 import { caseRelations, detail, queueItem, type CaseWithRelations } from "../serializers.js";
 
 export function tokenMatches(header: string | undefined, token: string): boolean {
@@ -87,7 +84,7 @@ function compareRows(
   return left.id.localeCompare(right.id);
 }
 
-/** REST for the web app and MCP: list/detail, notifications, and decision approval. */
+/** REST for the web app and MCP: merchant, case list/detail, evidence files, notifications. */
 export function caseRoutes(deps: AppDeps): FastifyPluginAsync {
   return async (app) => {
     app.addHook("onRequest", async (req: FastifyRequest, reply: FastifyReply) => {
@@ -152,57 +149,11 @@ export function caseRoutes(deps: AppDeps): FastifyPluginAsync {
         where: { id: parsed.data.evidenceId, caseId: parsed.data.caseId },
       });
       if (!evidence?.filePath) return reply.code(404).send({ error: "evidence file unavailable" });
-      const root = await realpath(resolve(deps.config.evidenceStorageDir)).catch(() => null);
-      if (!root) return reply.code(404).send({ error: "evidence storage unavailable" });
-      const candidate = resolve(
-        isAbsolute(evidence.filePath) ? evidence.filePath : root + "/" + evidence.filePath,
-      );
-      const target = await realpath(candidate).catch(() => null);
-      if (!target) return reply.code(404).send({ error: "evidence file unavailable" });
-      const escaped = relative(root, target).startsWith("..") || isAbsolute(relative(root, target));
-      if (escaped) return reply.code(403).send({ error: "evidence file outside storage" });
-      const info = await stat(target);
-      if (!info.isFile()) return reply.code(404).send({ error: "evidence file unavailable" });
-      const contentTypes: Record<string, string> = {
-        ".pdf": "application/pdf",
-        ".png": "image/png",
-        ".jpg": "image/jpeg",
-        ".jpeg": "image/jpeg",
-        ".webp": "image/webp",
-      };
-      const extension = target.slice(target.lastIndexOf(".")).toLowerCase();
-      const contentType = contentTypes[extension];
-      if (!contentType) return reply.code(415).send({ error: "unsupported evidence media" });
-      return reply.type(contentType).send(createReadStream(target));
+      return sendStoredFile(reply, deps.config.evidenceStorageDir, evidence.filePath);
     });
 
     app.get("/notifications", async () =>
       deps.db.notification.findMany({ where: { readAt: null }, orderBy: { createdAt: "desc" }, take: 50 }),
     );
-
-    app.post("/decisions/:id/approve", async (req, reply) => {
-      const { id } = z.object({ id: z.string() }).parse(req.params);
-      const body = z
-        .object({ approvedBy: z.string().min(1).max(100).default("seller") })
-        .parse(req.body ?? {});
-      const updated = await deps.db.decision.updateMany({
-        where: { id, status: "PROPOSED" },
-        data: { status: "APPROVED", approvedBy: body.approvedBy, approvedAt: new Date() },
-      });
-      if (updated.count === 0) {
-        const exists = await deps.db.decision.findUnique({ where: { id }, select: { status: true } });
-        return reply
-          .code(exists ? 409 : 404)
-          .send({ error: exists ? `decision is ${exists.status}` : "not found" });
-      }
-      await deps.queue.send(QUEUES.actionExecute, { decisionId: id }, { singletonKey: id });
-      return deps.db.decision.findUnique({ where: { id } });
-    });
-
-    for (const action of ["reject", "override"] as const) {
-      app.post(`/decisions/:id/${action}`, async (_req, reply) =>
-        reply.code(501).send({ error: `${action} is not available in Week 1` }),
-      );
-    }
   };
 }

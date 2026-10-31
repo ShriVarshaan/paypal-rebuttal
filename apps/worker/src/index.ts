@@ -26,3 +26,4 @@ export {
 } from "./jobs/triage.js";
 export { appealCase } from "./jobs/appeal.js";
 export { buildPack, type PackJobResult } from "./jobs/pack.js";
+export { sendBuyerMessage, type MessageJobResult } from "./jobs/message.js";

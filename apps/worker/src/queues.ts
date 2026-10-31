@@ -14,6 +14,8 @@ export const QUEUES = {
   actionExecute: "action.execute",
   /** C: render the PDF evidence pack for a FIGHT decision (jobs/pack.ts). */
   packBuild: "pack.build",
+  /** C: post a seller message to the buyer through PayPal (jobs/message.ts). */
+  messageSend: "message.send",
   /** Sent by C's pack job when an EvidencePack is READY. */
   packReady: "pack.ready",
   slaFire: "sla.fire",
@@ -29,6 +31,7 @@ export const Payloads = {
   [QUEUES.caseAppeal]: z.object({ caseId: z.string() }),
   [QUEUES.actionExecute]: z.object({ decisionId: z.string() }),
   [QUEUES.packBuild]: z.object({ decisionId: z.string() }),
+  [QUEUES.messageSend]: z.object({ actionId: z.string() }),
   [QUEUES.packReady]: z.object({ packId: z.string() }),
   [QUEUES.slaFire]: z.object({ slaJobId: z.string() }),
 } satisfies Record<QueueName, z.ZodType>;
@@ -61,6 +64,13 @@ export const QUEUE_CONFIG: Record<QueueName, QueueConfig> = {
     expireInSeconds: 300,
   },
   [QUEUES.packBuild]: { policy: "stately", retryLimit: 1, retryDelay: 15, expireInSeconds: 300 },
+  [QUEUES.messageSend]: {
+    policy: "stately",
+    retryLimit: 5,
+    retryDelay: 5,
+    retryBackoff: true,
+    retryDelayMax: 120,
+  },
   [QUEUES.packReady]: { policy: "standard", retryLimit: 3 },
   [QUEUES.slaFire]: { policy: "standard", retryLimit: 5, retryDelay: 30 },
 };

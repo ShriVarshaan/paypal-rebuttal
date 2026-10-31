@@ -7,6 +7,7 @@ import type { JobQueue } from "@rebuttal/worker";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { ApiConfig } from "./config.js";
 import { caseRoutes } from "./routes/cases.js";
+import { decisionRoutes } from "./routes/decisions.js";
 import { healthRoutes } from "./routes/health.js";
 import { intelligenceRoutes } from "./routes/intelligence.js";
 import { webhookRoutes } from "./routes/webhooks.js";
@@ -41,5 +42,6 @@ export async function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}): 
   await app.register(webhookRoutes(deps));
   await app.register(caseRoutes(deps));
   await app.register(intelligenceRoutes(deps));
+  await app.register(decisionRoutes(deps));
   return app;
 }
